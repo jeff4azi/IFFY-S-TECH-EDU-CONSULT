@@ -2352,10 +2352,11 @@ export default function HomePage() {
           </div>
 
           <div
+            className="contact-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: "3rem",
+              gap: "2rem",
               alignItems: "start",
             }}
           >
@@ -2714,6 +2715,7 @@ export default function HomePage() {
       >
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div
+            className="footer-grid"
             style={{
               display: "grid",
               gridTemplateColumns: "2fr 1fr 1fr",
@@ -2925,6 +2927,7 @@ export default function HomePage() {
 
           {/* Bottom bar */}
           <div
+            className="footer-bottom"
             style={{
               padding: "1.5rem 0",
               display: "flex",
@@ -2974,89 +2977,191 @@ export default function HomePage() {
       </footer>
 
       {/* ══════════════════ FLOATING BUTTONS ══════════════════ */}
-      {/* My Orders */}
+
+      {/* My Orders — pill with glass morphism style */}
       <button
         onClick={() => navigate("/my-orders")}
         aria-label="Track my orders"
         style={{
           position: "fixed",
-          bottom: 108,
+          bottom: 112,
           right: 24,
           zIndex: 50,
           background: "var(--primary)",
           color: "#fff",
           border: "none",
-          borderRadius: 50,
-          padding: "12px 20px",
+          borderRadius: 16,
+          padding: "10px 18px 10px 14px",
           fontWeight: 700,
-          fontSize: "0.88rem",
+          fontSize: "0.85rem",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
-          gap: 8,
-          boxShadow: "0 8px 24px rgba(26,67,40,0.4)",
-          transition: "all 0.2s",
+          gap: 10,
+          boxShadow: "0 8px 28px rgba(26,67,40,0.45)",
+          transition: "all 0.25s",
         }}
         onMouseEnter={(e) => {
-          e.currentTarget.style.transform = "translateY(-2px)";
-          e.currentTarget.style.boxShadow = "0 12px 32px rgba(26,67,40,0.5)";
+          e.currentTarget.style.background = "var(--primary-hover)";
+          e.currentTarget.style.transform = "translateY(-3px)";
+          e.currentTarget.style.boxShadow = "0 14px 36px rgba(26,67,40,0.55)";
         }}
         onMouseLeave={(e) => {
+          e.currentTarget.style.background = "var(--primary)";
           e.currentTarget.style.transform = "none";
-          e.currentTarget.style.boxShadow = "0 8px 24px rgba(26,67,40,0.4)";
+          e.currentTarget.style.boxShadow = "0 8px 28px rgba(26,67,40,0.45)";
         }}
       >
-        <i className="fas fa-receipt"></i>
-        <span>My Orders</span>
+        {/* Icon box */}
+        <div
+          style={{
+            width: 30,
+            height: 30,
+            borderRadius: 8,
+            background: "var(--secondary)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
+          }}
+        >
+          <i
+            className="fas fa-bag-shopping"
+            style={{ color: "#fff", fontSize: "0.85rem" }}
+          ></i>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            lineHeight: 1.2,
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.7rem",
+              color: "rgba(255,255,255,0.6)",
+              fontWeight: 500,
+            }}
+          >
+            Track
+          </span>
+          <span style={{ fontSize: "0.88rem", fontWeight: 800 }}>
+            My Orders
+          </span>
+        </div>
         {hasPendingOrder && (
           <span
             style={{
               position: "absolute",
-              top: -4,
-              right: -4,
-              width: 12,
-              height: 12,
+              top: -5,
+              right: -5,
+              width: 14,
+              height: 14,
               borderRadius: "50%",
               background: "#C84B31",
-              border: "2px solid #fff",
+              border: "2.5px solid white",
+              boxShadow: "0 0 0 3px rgba(200,75,49,0.3)",
               animation: "pulse-whatsapp 2s infinite",
             }}
           />
         )}
       </button>
 
-      {/* WhatsApp */}
+      {/* WhatsApp — square-ish card with label */}
       <a
         href={`https://wa.me/${settings.whatsappNumber}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="group"
+        aria-label="Chat with us on WhatsApp"
         style={{
           position: "fixed",
           bottom: 24,
           right: 24,
           zIndex: 50,
-          display: "block",
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          background: "#111",
+          borderRadius: 18,
+          padding: "11px 20px 11px 14px",
+          textDecoration: "none",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+          border: "1px solid rgba(255,255,255,0.08)",
+          transition: "all 0.25s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-3px)";
+          e.currentTarget.style.boxShadow = "0 16px 48px rgba(0,0,0,0.5)";
+          e.currentTarget.style.background = "#1a1a1a";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "0 8px 32px rgba(0,0,0,0.4)";
+          e.currentTarget.style.background = "#111";
         }}
       >
+        {/* WhatsApp icon circle */}
         <div
           style={{
-            width: 60,
-            height: 60,
+            width: 36,
+            height: 36,
+            borderRadius: 10,
             background: "#25D366",
-            borderRadius: "50%",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            color: "#fff",
-            fontSize: "1.75rem",
-            boxShadow: "0 8px 24px rgba(37,211,102,0.45)",
-            transition: "transform 0.2s",
+            flexShrink: 0,
+            boxShadow: "0 4px 12px rgba(37,211,102,0.45)",
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
         >
-          <i className="fab fa-whatsapp"></i>
+          <i
+            className="fab fa-whatsapp"
+            style={{ color: "#fff", fontSize: "1.2rem" }}
+          ></i>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            lineHeight: 1.2,
+          }}
+        >
+          <span
+            style={{
+              fontSize: "0.7rem",
+              color: "rgba(255,255,255,0.5)",
+              fontWeight: 500,
+            }}
+          >
+            Need help?
+          </span>
+          <span style={{ fontSize: "0.9rem", color: "#fff", fontWeight: 800 }}>
+            Chat with us
+          </span>
+        </div>
+        {/* Online dot */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 4,
+            marginLeft: 4,
+          }}
+        >
+          <span
+            style={{
+              width: 7,
+              height: 7,
+              borderRadius: "50%",
+              background: "#25D366",
+              boxShadow: "0 0 0 2px rgba(37,211,102,0.3)",
+              animation: "pulse-whatsapp 2s infinite",
+              display: "block",
+            }}
+          />
         </div>
       </a>
     </div>

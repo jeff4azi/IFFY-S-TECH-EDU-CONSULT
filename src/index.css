@@ -118,10 +118,42 @@ h6 {
   .how-it-works-grid {
     grid-template-columns: 1fr !important;
   }
+
+  /* Contact section: stack on mobile */
+  .contact-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
+
+  /* Footer: stack on mobile */
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+    gap: 2rem !important;
+  }
+
+  .footer-bottom {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    text-align: left;
+  }
+  .footer-bottom p {
+    font-size: 0.8rem !important;
+  }
 }
 
 @media (min-width: 769px) {
   .show-mobile {
     display: none !important;
+  }
+}
+
+/* ── Tablet breakpoint (769px – 1024px) ── */
+@media (min-width: 769px) and (max-width: 1024px) {
+  /* Footer: 2 cols on tablet — brand spans full, links + contact side by side */
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .footer-grid > div:first-child {
+    grid-column: 1 / -1;
   }
 }
