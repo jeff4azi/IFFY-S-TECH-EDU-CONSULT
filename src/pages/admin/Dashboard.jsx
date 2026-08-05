@@ -51,7 +51,7 @@ export default function AdminDashboard() {
           <div className="flex items-center gap-3 min-w-0">
             <img
               src={IffysLogo}
-              alt="Ace Educational Consult"
+              alt="IFFY'S TECH EDU CONSULT"
               className="h-9 shrink-0"
             />
             <span className="font-bold text-base truncate">Admin Panel</span>

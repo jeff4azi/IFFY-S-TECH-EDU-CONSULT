@@ -3,10 +3,10 @@ export const config = {
   matcher: ["/", "/service-form/:path*", "/payment", "/my-orders"],
 };
 
-const DEFAULT_TITLE =
-  "Ace Educational Consult - Your Trusted Partner for Educational & Digital Services";
+const SITE_NAME = "IFFY'S TECH EDU CONSULT";
+const DEFAULT_TITLE = "IFFY'S TECH EDU CONSULT – Tech & Education, Simplified";
 const DEFAULT_DESCRIPTION =
-  "Ace Educational Consult offers premium educational and digital services including admissions processing, document verification, CV writing, online courses, and more.";
+  "IFFY'S TECH EDU CONSULT delivers modern technology and educational consulting services — admissions, digital skills, certifications, document processing and more.";
 const DEFAULT_IMAGE = "/android-chrome-512x512.png";
 const DEFAULT_TYPE = "website";
 
@@ -27,11 +27,7 @@ function getPathname(url) {
 async function fetchServiceById(serviceId) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    return null;
-  }
-
+  if (!supabaseUrl || !supabaseAnonKey) return null;
   try {
     const res = await fetch(
       `${supabaseUrl}/rest/v1/services?id=eq.${encodeURIComponent(serviceId)}&select=name,description,price,image_url`,
@@ -40,10 +36,7 @@ async function fetchServiceById(serviceId) {
           apikey: supabaseAnonKey,
           Authorization: `Bearer ${supabaseAnonKey}`,
         },
-        cf: {
-          cacheTtl: 60,
-          cacheEverything: true,
-        },
+        cf: { cacheTtl: 60, cacheEverything: true },
       },
     );
     if (!res.ok) return null;
@@ -66,30 +59,36 @@ function escapeHtml(str) {
 function transformHtml(originalHtml, og) {
   let html = originalHtml;
 
+  // Title tag
   html = html.replace(
     /<title>[^<]*<\/title>/i,
     `<title>${escapeHtml(og.title)}</title>`,
   );
 
+  // Description meta
   const metaDescription = `<meta name="description" content="${escapeHtml(og.description)}">`;
   if (/<meta\s+name=["']description["']/i.test(html)) {
-    html = html.replace(/<meta\s+name=["']description["'][^>]*>/i, metaDescription);
+    html = html.replace(
+      /<meta\s+name=["']description["'][^>]*>/i,
+      metaDescription,
+    );
   } else {
     html = html.replace(/<\/title>/i, `</title>\n    ${metaDescription}`);
   }
 
+  // OG + Twitter tags
   const tags = [
-    `<meta property="og:type" content="${escapeHtml(og.type)}">`,
-    `<meta property="og:url" content="${escapeHtml(og.url)}">`,
-    `<meta property="og:title" content="${escapeHtml(og.title)}">`,
+    `<meta property="og:type"        content="${escapeHtml(og.type)}">`,
+    `<meta property="og:url"         content="${escapeHtml(og.url)}">`,
+    `<meta property="og:title"       content="${escapeHtml(og.title)}">`,
     `<meta property="og:description" content="${escapeHtml(og.description)}">`,
-    `<meta property="og:image" content="${escapeHtml(og.image)}">`,
-    `<meta property="og:site_name" content="Ace Educational Consult">`,
-    `<meta name="twitter:card" content="summary_large_image">`,
-    `<meta name="twitter:url" content="${escapeHtml(og.url)}">`,
-    `<meta name="twitter:title" content="${escapeHtml(og.title)}">`,
+    `<meta property="og:image"       content="${escapeHtml(og.image)}">`,
+    `<meta property="og:site_name"   content="${escapeHtml(SITE_NAME)}">`,
+    `<meta name="twitter:card"        content="summary_large_image">`,
+    `<meta name="twitter:url"         content="${escapeHtml(og.url)}">`,
+    `<meta name="twitter:title"       content="${escapeHtml(og.title)}">`,
     `<meta name="twitter:description" content="${escapeHtml(og.description)}">`,
-    `<meta name="twitter:image" content="${escapeHtml(og.image)}">`,
+    `<meta name="twitter:image"       content="${escapeHtml(og.image)}">`,
   ].join("\n    ");
 
   html = html.replace(
@@ -120,9 +119,9 @@ export default async function middleware(request) {
       const desc =
         service.description && service.description.trim().length > 0
           ? service.description
-          : `${service.name || "Service"} — Premium educational service at Ace Educational Consult.`;
+          : `${service.name || "Service"} — Premium service at ${SITE_NAME}.`;
       og = {
-        title: `${service.name || "Service"} | Ace Educational Consult`,
+        title: `${service.name || "Service"} | ${SITE_NAME}`,
         description: desc,
         image: service.image_url || `${baseUrl}${DEFAULT_IMAGE}`,
         url: `${baseUrl}/service-form/${serviceId}`,
@@ -131,27 +130,18 @@ export default async function middleware(request) {
     }
   } else if (pathname === "/" || pathname === "") {
     og.url = `${baseUrl}/`;
-  } else {
-    og.url = `${baseUrl}${pathname}`;
   }
 
+  // Fetch the SPA shell
   const indexUrl = new URL("/index.html", `${baseUrl}/`);
   const originRes = await fetch(indexUrl.toString(), {
-    headers: {
-      "accept": "text/html",
-    },
-    cf: {
-      cacheTtl: 10,
-      cacheEverything: true,
-    },
+    headers: { accept: "text/html" },
+    cf: { cacheTtl: 10, cacheEverything: true },
   });
 
-  let html;
-  if (originRes.ok) {
-    html = await originRes.text();
-  } else {
-    html = `<!doctype html><html lang="en"><head><meta charset="UTF-8"><title>Ace</title></head><body><div id="root"></div></body></html>`;
-  }
+  let html = originRes.ok
+    ? await originRes.text()
+    : `<!doctype html><html lang="en"><head><meta charset="UTF-8"><title>${SITE_NAME}</title></head><body><div id="root"></div></body></html>`;
 
   const transformedHtml = transformHtml(html, og);
 
