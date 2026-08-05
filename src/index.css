@@ -1,36 +1,37 @@
 @import "tailwindcss";
 
-html, body {
+html,
+body {
   overflow-x: hidden;
   margin: 0;
   padding: 0;
 }
 
 :root {
-  --primary: #1A4328;
-  --primary-hover: #14341F;
+  --primary: #1a4328;
+  --primary-hover: #14341f;
 
-  --secondary: #C49F34;
-  --secondary-hover: #B39A4F;
+  --secondary: #c49f34;
+  --secondary-hover: #b39a4f;
 
-  --accent: #C9B87C;
+  --accent: #c9b87c;
 
-  --background: #F5F6F1;
-  --surface: #FFFFFF;
+  --background: #f5f6f1;
+  --surface: #ffffff;
 
-  --text: #1F2937;
-  --text-muted: #5F6B66;
+  --text: #1f2937;
+  --text-muted: #5f6b66;
 
-  --border: #D9DDD4;
+  --border: #d9ddd4;
 
-  --success: #1A4328;
-  --warning: #C49F34;
-  --danger: #C84B31;
-  --info: #9EB1A2;
+  --success: #1a4328;
+  --warning: #c49f34;
+  --danger: #c84b31;
+  --info: #9eb1a2;
 }
 
 body {
-  font-family: 'Manrope', sans-serif;
+  font-family: "Manrope", sans-serif;
 }
 
 h1,
@@ -39,7 +40,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: "Plus Jakarta Sans", sans-serif;
 }
 @keyframes fadeInUp {
   from {
@@ -53,7 +54,8 @@ h6 {
 }
 
 @keyframes float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px);
   }
   50% {
@@ -62,7 +64,8 @@ h6 {
 }
 
 @keyframes pulse-whatsapp {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
   }
   50% {
@@ -80,4 +83,30 @@ h6 {
 
 .pulse-whatsapp {
   animation: pulse-whatsapp 2s infinite;
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+/* ── Responsive helpers ── */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+  .show-mobile {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .show-mobile {
+    display: none !important;
+  }
 }

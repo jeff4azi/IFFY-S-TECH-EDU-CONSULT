@@ -5,13 +5,39 @@ import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 
 const PENDING_ORDER_KEY = "ace_pending_order";
 
+/* ─── tiny animated counter ─── */
+function Counter({ end, suffix }) {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    let start = 0;
+    const duration = 2000;
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        setCount(end);
+        clearInterval(timer);
+      } else setCount(Math.floor(start));
+    }, 16);
+    return () => clearInterval(timer);
+  }, [end]);
+  return (
+    <span>
+      {count.toLocaleString()}
+      {suffix}
+    </span>
+  );
+}
+
 export default function HomePage() {
   const [scrolled, setScrolled] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [hasPendingOrder, setHasPendingOrder] = useState(false);
+  const [activeCategory, setActiveCategory] = useState(null);
   const statsRef = useRef(null);
   const navigate = useNavigate();
+
   const {
     siteSettings,
     services,
@@ -21,9 +47,8 @@ export default function HomePage() {
     loading,
   } = useAdmin();
 
-  // Calculate total number of available services
   const totalServices = Object.values(services).reduce(
-    (sum, categoryServices) => sum + categoryServices.length,
+    (sum, cat) => sum + cat.length,
     0,
   );
 
@@ -41,68 +66,51 @@ export default function HomePage() {
   const [successMsg, setSuccessMsg] = useState("");
   const [shareToast, setShareToast] = useState("");
 
+  /* ── SEO meta ── */
   useEffect(() => {
-    const defaultTitle =
-      "Ace Educational Consult - Your Trusted Partner for Educational & Digital Services";
-    const defaultDescription =
-      "Ace Educational Consult offers premium educational and digital services including admissions processing, document verification, CV writing, online courses, and more.";
+    const title = "IFFY'S TECH EDU CONSULT – Tech & Education, Simplified";
+    const desc =
+      "IFFY'S TECH EDU CONSULT delivers modern technology and educational consulting services — admissions, digital skills, certifications, document processing and more.";
     const url = `${window.location.origin}/`;
     const image = `${window.location.origin}/android-chrome-512x512.png`;
-
-    document.title = defaultTitle;
-
-    const setMeta = (selector, attr, name, content) => {
-      let el = document.head.querySelector(selector);
+    document.title = title;
+    const setMeta = (sel, attr, name, content) => {
+      let el = document.head.querySelector(sel);
       if (!el) {
         el = document.createElement("meta");
-        if (attr === "property") el.setAttribute("property", name);
-        else el.setAttribute("name", name);
+        el.setAttribute(attr, name);
         document.head.appendChild(el);
       }
       el.setAttribute("content", content);
     };
-
-    setMeta(
-      'meta[name="description"]',
-      "name",
-      "description",
-      defaultDescription,
-    );
+    setMeta('meta[name="description"]', "name", "description", desc);
     setMeta('meta[property="og:type"]', "property", "og:type", "website");
     setMeta('meta[property="og:url"]', "property", "og:url", url);
-    setMeta('meta[property="og:title"]', "property", "og:title", defaultTitle);
+    setMeta('meta[property="og:title"]', "property", "og:title", title);
     setMeta(
       'meta[property="og:description"]',
       "property",
       "og:description",
-      defaultDescription,
+      desc,
     );
     setMeta('meta[property="og:image"]', "property", "og:image", image);
     setMeta('meta[name="twitter:url"]', "name", "twitter:url", url);
-    setMeta(
-      'meta[name="twitter:title"]',
-      "name",
-      "twitter:title",
-      defaultTitle,
-    );
+    setMeta('meta[name="twitter:title"]', "name", "twitter:title", title);
     setMeta(
       'meta[name="twitter:description"]',
       "name",
       "twitter:description",
-      defaultDescription,
+      desc,
     );
     setMeta('meta[name="twitter:image"]', "name", "twitter:image", image);
   }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 50);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
+    const onScroll = () => setScrolled(window.scrollY > 60);
+    window.addEventListener("scroll", onScroll);
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Check for an unfinished pending order in localStorage
   useEffect(() => {
     const check = () => {
       try {
@@ -112,7 +120,6 @@ export default function HomePage() {
       }
     };
     check();
-    // Re-check whenever the tab regains focus (user returns from another tab)
     window.addEventListener("focus", check);
     return () => window.removeEventListener("focus", check);
   }, []);
@@ -120,142 +127,94 @@ export default function HomePage() {
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
             setStatsVisible(true);
-            observer.unobserve(entry.target);
+            observer.unobserve(e.target);
           }
         });
       },
       { threshold: 0.1 },
     );
-    if (statsRef.current) {
-      observer.observe(statsRef.current);
-    }
+    if (statsRef.current) observer.observe(statsRef.current);
     return () => {
-      if (statsRef.current) {
-        observer.unobserve(statsRef.current);
-      }
+      if (statsRef.current) observer.unobserve(statsRef.current);
     };
-  }, [statsRef.current]);
+  }, [loading]);
 
-  const Counter = ({ end, suffix }) => {
-    const [count, setCount] = useState(0);
-    useEffect(() => {
-      let start = 0;
-      const duration = 2000;
-      const increment = end / (duration / 16);
-      const timer = setInterval(() => {
-        start += increment;
-        if (start >= end) {
-          setCount(end);
-          clearInterval(timer);
-        } else {
-          setCount(Math.floor(start));
-        }
-      }, 16);
-      return () => clearInterval(timer);
-    }, [end]);
-    return (
-      <span>
-        {count.toLocaleString()}
-        {suffix}
-      </span>
-    );
-  };
-
-  const scrollToSection = (id) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    if (shareToast) {
+      const t = setTimeout(() => setShareToast(""), 2500);
+      return () => clearTimeout(t);
     }
+  }, [shareToast]);
+
+  /* initialise activeCategory once services load */
+  useEffect(() => {
+    const cats = Object.keys(services);
+    if (cats.length && !activeCategory) setActiveCategory(cats[0]);
+  }, [services]);
+
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleContactSubmit = (e) => {
     e.preventDefault();
     addContactMessage(contactForm);
-    setSuccessMsg("Message sent successfully!");
+    setSuccessMsg("Message sent! We'll be in touch soon.");
     setContactForm({ name: "", email: "", phoneNumber: "", message: "" });
-    setTimeout(() => setSuccessMsg(""), 3000);
+    setTimeout(() => setSuccessMsg(""), 3500);
   };
 
   const handleTestimonialSubmit = (e) => {
     e.preventDefault();
     addTestimonial(testimonialForm);
-    setSuccessMsg("Testimonial submitted for approval!");
+    setSuccessMsg("Review submitted — thank you!");
     setTestimonialForm({ name: "", text: "", rating: 5 });
-    setTimeout(() => setSuccessMsg(""), 3000);
+    setTimeout(() => setSuccessMsg(""), 3500);
   };
 
-  useEffect(() => {
-    if (shareToast) {
-      const timer = setTimeout(() => setShareToast(""), 2500);
-      return () => clearTimeout(timer);
-    }
-  }, [shareToast]);
+  const getServiceUrl = (s) => `${window.location.origin}/service-form/${s.id}`;
 
-  const getServiceUrl = (service) =>
-    `${window.location.origin}/service-form/${service.id}`;
-
-  const copyLinkToClipboard = async (service) => {
-    const shareUrl = getServiceUrl(service);
+  const copyLink = async (s) => {
+    const url = getServiceUrl(s);
     try {
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        const textArea = document.createElement("textarea");
-        textArea.value = shareUrl;
-        document.body.appendChild(textArea);
-        textArea.select();
+      if (navigator.clipboard) await navigator.clipboard.writeText(url);
+      else {
+        const ta = document.createElement("textarea");
+        ta.value = url;
+        document.body.appendChild(ta);
+        ta.select();
         document.execCommand("copy");
-        document.body.removeChild(textArea);
+        document.body.removeChild(ta);
       }
-      setShareToast("Link copied to clipboard!");
+      setShareToast("Link copied!");
       return true;
-    } catch (err) {
-      console.error("Copy failed:", err);
+    } catch {
       setShareToast("Couldn't copy link.");
       return false;
     }
   };
 
-  const handleShare = async (service, e) => {
+  const handleShare = async (s, e) => {
     if (e) e.stopPropagation();
-    const shareUrl = getServiceUrl(service);
-    const shareData = {
-      title: `${service.name} - Ace Educational Consult`,
-      text: `Check out this service: ${service.name} - ${service.description}`,
-      url: shareUrl,
-    };
-
     try {
       if (navigator.share) {
-        await navigator.share(shareData);
-        setShareToast("Shared successfully!");
-      } else {
-        await copyLinkToClipboard(service);
-      }
+        await navigator.share({
+          title: s.name,
+          text: s.description,
+          url: getServiceUrl(s),
+        });
+        setShareToast("Shared!");
+      } else await copyLink(s);
     } catch (err) {
-      if (err.name !== "AbortError") {
-        await copyLinkToClipboard(service);
-      }
+      if (err.name !== "AbortError") await copyLink(s);
     }
   };
 
   const approvedTestimonials = testimonials.filter((t) => t.approved);
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <i className="fas fa-spinner fa-spin text-5xl text-blue-600 mb-4"></i>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // Handle case where siteSettings might be null initially
   const defaultSettings = {
     phoneNumber: "",
     email: "",
@@ -268,469 +227,1711 @@ export default function HomePage() {
   };
   const settings = siteSettings || defaultSettings;
 
-  return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
-      {/* Navbar */}
-      <nav
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-white/90 backdrop-blur-md shadow-lg" : "bg-transparent"}`}
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          background: "var(--background)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div
-              className="flex items-center gap-2 cursor-pointer"
-              onClick={() => {
-                scrollToSection("home");
-                setMobileMenuOpen(false);
+        <div style={{ textAlign: "center" }}>
+          <i
+            className="fas fa-circle-notch fa-spin"
+            style={{
+              fontSize: "3rem",
+              color: "var(--primary)",
+              marginBottom: "1rem",
+              display: "block",
+            }}
+          ></i>
+          <p
+            style={{
+              color: "var(--text-muted)",
+              fontFamily: "var(--font-body)",
+            }}
+          >
+            Loading…
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  /* ─────────────────────────────────── RENDER ───────────────────────────────── */
+  return (
+    <div
+      style={{
+        background: "var(--background)",
+        overflowX: "hidden",
+        minHeight: "100vh",
+      }}
+    >
+      {/* ══════════════════ NAVBAR ══════════════════ */}
+      <nav
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          transition: "all 0.3s",
+          background: scrolled ? "rgba(255,255,255,0.97)" : "transparent",
+          backdropFilter: scrolled ? "blur(12px)" : "none",
+          boxShadow: scrolled ? "0 2px 20px rgba(26,67,40,0.10)" : "none",
+          borderBottom: scrolled ? "1px solid var(--border)" : "none",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "0 1.5rem",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            height: 72,
+          }}
+        >
+          {/* Logo */}
+          <button
+            onClick={() => {
+              scrollTo("home");
+              setMobileMenuOpen(false);
+            }}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: 10,
+              padding: 0,
+            }}
+          >
+            <img
+              src={IffysLogo}
+              alt="IFFY'S TECH EDU CONSULT"
+              style={{ height: 52, objectFit: "contain" }}
+            />
+          </button>
+
+          {/* Desktop nav */}
+          <div
+            className="hide-mobile"
+            style={{ display: "flex", alignItems: "center", gap: "2rem" }}
+          >
+            {["home", "services", "why-us", "testimonials", "contact"].map(
+              (s) => (
+                <button
+                  key={s}
+                  onClick={() => scrollTo(s)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    fontSize: "0.9rem",
+                    color: scrolled ? "var(--text)" : "#fff",
+                    textTransform: "capitalize",
+                    letterSpacing: "0.03em",
+                    transition: "color 0.2s",
+                    padding: "4px 0",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "var(--secondary)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = scrolled
+                      ? "var(--text)"
+                      : "#fff")
+                  }
+                >
+                  {s.replace("-", " ")}
+                </button>
+              ),
+            )}
+            <button
+              onClick={() => scrollTo("services")}
+              style={{
+                background: "var(--secondary)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 50,
+                padding: "10px 24px",
+                fontWeight: 700,
+                fontSize: "0.9rem",
+                cursor: "pointer",
+                letterSpacing: "0.04em",
+                transition: "all 0.2s",
+                boxShadow: "0 4px 14px rgba(196,159,52,0.35)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--secondary-hover)";
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "var(--secondary)";
+                e.currentTarget.style.transform = "none";
               }}
             >
-              <img
-                src={IffysLogo}
-                alt="Ace Educational Consult Logo"
-                className="h-16 object-contain"
-              />
-            </div>
-            <div className="hidden md:flex items-center gap-8">
-              <button
-                onClick={() => scrollToSection("home")}
-                className="text-gray-700 hover:text-[#4169E1] font-medium transition-colors"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => scrollToSection("services")}
-                className="text-gray-700 hover:text-[#4169E1] font-medium transition-colors"
-              >
-                Services
-              </button>
-              <button
-                onClick={() => scrollToSection("why-us")}
-                className="text-gray-700 hover:text-[#4169E1] font-medium transition-colors"
-              >
-                Why Us
-              </button>
-              <button
-                onClick={() => scrollToSection("testimonials")}
-                className="text-gray-700 hover:text-[#4169E1] font-medium transition-colors"
-              >
-                Testimonials
-              </button>
-              <button
-                onClick={() => scrollToSection("contact")}
-                className="text-gray-700 hover:text-[#4169E1] font-medium transition-colors"
-              >
-                Contact
-              </button>
-              <button
-                onClick={() => scrollToSection("contact")}
-                className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-6 py-2.5 rounded-full font-semibold transition-all hover:shadow-lg hover:scale-105"
-              >
-                Get Started
-              </button>
-            </div>
-            <button
-              className="md:hidden text-gray-700 text-2xl"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              <i
-                className={`fas ${mobileMenuOpen ? "fa-times" : "fa-bars"}`}
-              ></i>
+              Explore Services
             </button>
           </div>
+
+          {/* Mobile hamburger */}
+          <button
+            className="show-mobile"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              fontSize: "1.5rem",
+              color: scrolled ? "var(--text)" : "#fff",
+              display: "none",
+            }}
+          >
+            <i className={`fas ${mobileMenuOpen ? "fa-xmark" : "fa-bars"}`}></i>
+          </button>
         </div>
-        {/* Mobile Menu */}
+
+        {/* Mobile dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t">
-            <div className="px-4 py-4 space-y-3">
-              <button
-                onClick={() => {
-                  scrollToSection("home");
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left text-gray-700 hover:text-[#4169E1] font-medium transition-colors py-2"
-              >
-                Home
-              </button>
-              <button
-                onClick={() => {
-                  scrollToSection("services");
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left text-gray-700 hover:text-[#4169E1] font-medium transition-colors py-2"
-              >
-                Services
-              </button>
-              <button
-                onClick={() => {
-                  scrollToSection("why-us");
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left text-gray-700 hover:text-[#4169E1] font-medium transition-colors py-2"
-              >
-                Why Us
-              </button>
-              <button
-                onClick={() => {
-                  scrollToSection("testimonials");
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left text-gray-700 hover:text-[#4169E1] font-medium transition-colors py-2"
-              >
-                Testimonials
-              </button>
-              <button
-                onClick={() => {
-                  scrollToSection("contact");
-                  setMobileMenuOpen(false);
-                }}
-                className="block w-full text-left text-gray-700 hover:text-[#4169E1] font-medium transition-colors py-2"
-              >
-                Contact
-              </button>
-              <button
-                onClick={() => {
-                  scrollToSection("contact");
-                  setMobileMenuOpen(false);
-                }}
-                className="w-full bg-[#4169E1] hover:bg-[#3658c9] text-white px-6 py-3 rounded-full font-semibold transition-all hover:shadow-lg"
-              >
-                Get Started
-              </button>
-            </div>
+          <div
+            style={{
+              background: "var(--surface)",
+              borderTop: "1px solid var(--border)",
+              padding: "1rem 1.5rem",
+            }}
+          >
+            {["home", "services", "why-us", "testimonials", "contact"].map(
+              (s) => (
+                <button
+                  key={s}
+                  onClick={() => {
+                    scrollTo(s);
+                    setMobileMenuOpen(false);
+                  }}
+                  style={{
+                    display: "block",
+                    width: "100%",
+                    textAlign: "left",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "10px 0",
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    textTransform: "capitalize",
+                    borderBottom: "1px solid var(--border)",
+                  }}
+                >
+                  {s.replace("-", " ")}
+                </button>
+              ),
+            )}
+            <button
+              onClick={() => {
+                scrollTo("services");
+                setMobileMenuOpen(false);
+              }}
+              style={{
+                marginTop: "1rem",
+                width: "100%",
+                background: "var(--secondary)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 50,
+                padding: "12px 0",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+            >
+              Explore Services
+            </button>
           </div>
         )}
       </nav>
 
-      {/* Success Message */}
+      {/* ── Toast notifications ── */}
       {successMsg && (
-        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-green-500 text-white px-6 py-3 rounded-xl shadow-lg">
-          {successMsg}
+        <div
+          style={{
+            position: "fixed",
+            top: 88,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 999,
+            background: "var(--primary)",
+            color: "#fff",
+            padding: "12px 24px",
+            borderRadius: 12,
+            boxShadow: "0 8px 30px rgba(26,67,40,0.3)",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <i className="fas fa-circle-check"></i> {successMsg}
         </div>
       )}
-
-      {/* Share Toast */}
       {shareToast && (
-        <div className="fixed top-24 left-1/2 transform -translate-x-1/2 z-50 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-2">
-          <i className="fas fa-check-circle text-green-400"></i>
+        <div
+          style={{
+            position: "fixed",
+            top: 88,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 999,
+            background: "var(--text)",
+            color: "#fff",
+            padding: "12px 24px",
+            borderRadius: 12,
+            boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
+            fontWeight: 600,
+            display: "flex",
+            alignItems: "center",
+            gap: 8,
+          }}
+        >
+          <i
+            className="fas fa-circle-check"
+            style={{ color: "var(--secondary)" }}
+          ></i>{" "}
           {shareToast}
         </div>
       )}
 
-      {/* Hero Section */}
+      {/* ══════════════════ HERO ══════════════════ */}
       <section
         id="home"
-        className="pt-32 pb-20 bg-gradient-to-br from-blue-50 to-white"
+        style={{
+          position: "relative",
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          overflow: "hidden",
+        }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div className="fade-in-up">
-              <h1 className="text-[clamp(2rem,5vw,3.5rem)] font-bold text-gray-900 leading-tight mb-6">
-                Your Trusted Partner for{" "}
-                <span className="text-[#4169E1]">
-                  Educational & Digital Services
-                </span>
-              </h1>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Fast, secure, and reliable assistance for examination
-                registrations, result verification, admissions, identity
-                services, utility payments, and more.
-              </p>
-              <div className="flex flex-wrap gap-4">
-                <button
-                  onClick={() => scrollToSection("services")}
-                  className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-8 py-4 rounded-full font-semibold text-lg transition-all hover:shadow-xl hover:scale-105"
-                >
-                  Get Started
-                </button>
-                <button
-                  onClick={() => scrollToSection("contact")}
-                  className="border-2 border-[#4169E1] text-[#4169E1] hover:bg-[#4169E1] hover:text-white px-8 py-4 rounded-full font-semibold text-lg transition-all"
-                >
-                  Contact Us
-                </button>
-              </div>
-            </div>
-            <div className="floating">
-              <img
-                src="https://coresg-normal.trae.ai/api/ide/v1/text_to_image?prompt=students%20graduation%20certificates%20books%20university%20admissions%20happy%20education%20Nigeria&image_size=landscape_16_9"
-                alt="Education"
-                className="rounded-3xl shadow-2xl w-full"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
+        {/* Background image + overlay */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            backgroundImage:
+              "url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=1800&q=80')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            background:
+              "linear-gradient(135deg, rgba(26,67,40,0.92) 0%, rgba(26,67,40,0.75) 50%, rgba(20,52,31,0.85) 100%)",
+          }}
+        />
+        {/* decorative circles */}
+        <div
+          style={{
+            position: "absolute",
+            top: -80,
+            right: -80,
+            width: 420,
+            height: 420,
+            borderRadius: "50%",
+            border: "2px solid rgba(196,159,52,0.15)",
+            zIndex: 1,
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            top: 60,
+            right: 40,
+            width: 240,
+            height: 240,
+            borderRadius: "50%",
+            border: "2px solid rgba(196,159,52,0.08)",
+            zIndex: 1,
+          }}
+        />
 
-      {/* Statistics Section */}
-      <section ref={statsRef} id="stats" className="py-16 bg-[#4169E1]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#FFC107] mb-2">
-                <Counter end={10000} suffix="+" />
-              </div>
-              <div className="text-white text-lg font-medium">
-                Happy Clients
-              </div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#FFC107] mb-2">
-                <Counter end={98} suffix="%" />
-              </div>
-              <div className="text-white text-lg font-medium">
-                Customer Satisfaction
-              </div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#FFC107] mb-2">
-                <Counter end={totalServices} suffix="+" />
-              </div>
-              <div className="text-white text-lg font-medium">
-                Available Services
-              </div>
-            </div>
-            <div>
-              <div className="text-4xl md:text-5xl font-bold text-[#FFC107] mb-2">
-                24/7
-              </div>
-              <div className="text-white text-lg font-medium">
-                Customer Support
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section id="why-us" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-gray-900 mb-4">
-              Why Choose Us
-            </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              We provide exceptional services with professionalism and care
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: "fa-bolt",
-                title: "Fast Processing",
-                desc: "Quick turnaround for all educational and digital services.",
-              },
-              {
-                icon: "fa-lock",
-                title: "Secure Transactions",
-                desc: "Your information is handled with privacy and security.",
-              },
-              {
-                icon: "fa-headset",
-                title: "Trusted Support",
-                desc: "Professional customer support whenever you need assistance.",
-              },
-              {
-                icon: "fa-tags",
-                title: "Affordable Pricing",
-                desc: "Competitive pricing with transparent service charges.",
-              },
-            ].map((feature, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 border border-gray-100"
+        <div
+          style={{
+            position: "relative",
+            zIndex: 2,
+            maxWidth: 1280,
+            margin: "0 auto",
+            padding: "120px 1.5rem 80px",
+            width: "100%",
+          }}
+        >
+          <div style={{ maxWidth: 680 }}>
+            {/* eyebrow */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(196,159,52,0.15)",
+                border: "1px solid rgba(196,159,52,0.35)",
+                borderRadius: 50,
+                padding: "6px 16px",
+                marginBottom: "1.5rem",
+              }}
+            >
+              <i
+                className="fas fa-microchip"
+                style={{ color: "var(--secondary)", fontSize: "0.85rem" }}
+              ></i>
+              <span
+                style={{
+                  color: "var(--secondary)",
+                  fontSize: "0.82rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
               >
-                <div className="w-16 h-16 bg-gradient-to-br from-[#4169E1] to-[#3658c9] rounded-2xl flex items-center justify-center mb-6">
-                  <i className={`fas ${feature.icon} text-white text-2xl`}></i>
+                Technology &amp; Education Consulting
+              </span>
+            </div>
+
+            <h1
+              style={{
+                fontSize: "clamp(2.2rem,6vw,4rem)",
+                fontWeight: 800,
+                color: "#fff",
+                lineHeight: 1.15,
+                marginBottom: "1.5rem",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Empowering Your Future Through{" "}
+              <span style={{ color: "var(--secondary)" }}>
+                Tech &amp; Education
+              </span>
+            </h1>
+
+            <p
+              style={{
+                fontSize: "1.15rem",
+                color: "rgba(255,255,255,0.80)",
+                lineHeight: 1.75,
+                marginBottom: "2.5rem",
+                maxWidth: 540,
+              }}
+            >
+              From admissions processing and digital certifications to utility
+              payments and document verification — IFFY'S TECH EDU CONSULT
+              handles it all with speed, security, and expertise.
+            </p>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+              <button
+                onClick={() => scrollTo("services")}
+                style={{
+                  background: "var(--secondary)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 50,
+                  padding: "14px 32px",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  boxShadow: "0 8px 24px rgba(196,159,52,0.45)",
+                  transition: "all 0.25s",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 10,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-3px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 12px 32px rgba(196,159,52,0.55)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow =
+                    "0 8px 24px rgba(196,159,52,0.45)";
+                }}
+              >
+                <i className="fas fa-rocket"></i> Explore Our Services
+              </button>
+              <button
+                onClick={() => scrollTo("contact")}
+                style={{
+                  background: "transparent",
+                  color: "#fff",
+                  border: "2px solid rgba(255,255,255,0.5)",
+                  borderRadius: 50,
+                  padding: "14px 32px",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  transition: "all 0.25s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#fff";
+                  e.currentTarget.style.background = "rgba(255,255,255,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                Get in Touch
+              </button>
+            </div>
+
+            {/* trust badges */}
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "1.5rem",
+                marginTop: "3rem",
+              }}
+            >
+              {[
+                { icon: "fa-shield-halved", text: "Secure & Verified" },
+                { icon: "fa-bolt", text: "Fast Delivery" },
+                { icon: "fa-headset", text: "24/7 Support" },
+              ].map((b) => (
+                <div
+                  key={b.text}
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  <i
+                    className={`fas ${b.icon}`}
+                    style={{ color: "var(--secondary)", fontSize: "1rem" }}
+                  ></i>
+                  <span
+                    style={{
+                      color: "rgba(255,255,255,0.75)",
+                      fontSize: "0.9rem",
+                      fontWeight: 500,
+                    }}
+                  >
+                    {b.text}
+                  </span>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-3">
-                  {feature.title}
-                </h3>
-                <p className="text-gray-600">{feature.desc}</p>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
+        </div>
+
+        {/* scroll cue */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 32,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 2,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            gap: 6,
+          }}
+        >
+          <span
+            style={{
+              color: "rgba(255,255,255,0.5)",
+              fontSize: "0.75rem",
+              letterSpacing: "0.1em",
+              textTransform: "uppercase",
+            }}
+          >
+            Scroll
+          </span>
+          <i
+            className="fas fa-chevron-down"
+            style={{
+              color: "var(--secondary)",
+              animation: "bounce 1.5s infinite",
+            }}
+          ></i>
         </div>
       </section>
 
-      {/* Our Services */}
-      <section id="services" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-gray-900 mb-4">
-              Our Services
-            </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Explore our comprehensive range of educational and digital
-              services
-            </p>
-          </div>
-          {Object.entries(services).map(([category, items], catIdx) => (
-            <div key={catIdx} className="mb-16">
-              <h3 className="text-2xl font-bold text-gray-900 mb-8 border-l-4 border-[#4169E1] pl-4">
-                {category}
-              </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {items.map((service, idx) => (
-                  <div
-                    key={idx}
-                    className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group flex flex-col"
-                  >
-                    <div
-                      className="relative h-48 overflow-hidden cursor-pointer"
-                      onClick={() => navigate(`/service-form/${service.id}`)}
-                    >
-                      <img
-                        src={service.image}
-                        alt={service.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      />
-                      <button
-                        onClick={(e) => handleShare(service, e)}
-                        className="absolute top-3 right-3 z-10 w-11 h-11 bg-white/90 backdrop-blur-sm hover:bg-white rounded-full flex items-center justify-center text-gray-700 hover:text-[#4169E1] shadow-lg transition-all active:scale-95"
-                        aria-label={`Share ${service.name}`}
-                        title="Share this service"
-                      >
-                        <i className="fas fa-share-nodes"></i>
-                      </button>
-                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/50 to-transparent h-16 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </div>
-                    <div className="p-6 flex flex-col flex-1">
-                      <h4
-                        className="text-lg font-bold text-gray-900 mb-2 cursor-pointer hover:text-[#4169E1] transition-colors"
-                        onClick={() => navigate(`/service-form/${service.id}`)}
-                      >
-                        {service.name}
-                      </h4>
-                      <p className="text-gray-600 text-sm mb-4 flex-1">
-                        {service.description}
-                      </p>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="text-2xl font-bold text-[#4169E1]">
-                          {service.price}
-                        </div>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            copyLinkToClipboard(service);
-                          }}
-                          className="text-xs text-gray-400 hover:text-[#4169E1] transition-colors font-medium flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-gray-50 active:scale-95"
-                          title="Copy direct link to this service"
-                        >
-                          <i className="fas fa-copy"></i>
-                          Copy link
-                        </button>
-                      </div>
-                      <button
-                        onClick={() => navigate(`/service-form/${service.id}`)}
-                        className="w-full bg-[#4169E1] hover:bg-[#3658c9] text-white py-3 rounded-xl font-semibold transition-all hover:shadow-lg active:scale-95 flex items-center justify-center gap-2"
-                      >
-                        <i className="fas fa-arrow-right"></i>
-                        Order Now
-                      </button>
-                    </div>
-                  </div>
-                ))}
+      {/* ══════════════════ STATS STRIP ══════════════════ */}
+      <section
+        ref={statsRef}
+        style={{ background: "var(--primary)", padding: "3.5rem 1.5rem" }}
+      >
+        <div
+          style={{
+            maxWidth: 1280,
+            margin: "0 auto",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(180px,1fr))",
+            gap: "2rem",
+            textAlign: "center",
+          }}
+        >
+          {[
+            {
+              end: 10000,
+              suffix: "+",
+              label: "Clients Served",
+              icon: "fa-users",
+            },
+            {
+              end: 98,
+              suffix: "%",
+              label: "Satisfaction Rate",
+              icon: "fa-face-smile",
+            },
+            {
+              end: totalServices,
+              suffix: "+",
+              label: "Active Services",
+              icon: "fa-layer-group",
+            },
+            {
+              end: 5,
+              suffix: "+",
+              label: "Years Experience",
+              icon: "fa-calendar-check",
+            },
+          ].map((s) => (
+            <div key={s.label}>
+              <div
+                style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: "50%",
+                  background: "rgba(196,159,52,0.2)",
+                  border: "1px solid rgba(196,159,52,0.35)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  margin: "0 auto 0.75rem",
+                }}
+              >
+                <i
+                  className={`fas ${s.icon}`}
+                  style={{ color: "var(--secondary)", fontSize: "1.2rem" }}
+                ></i>
+              </div>
+              <div
+                style={{
+                  fontSize: "clamp(2rem,4vw,2.8rem)",
+                  fontWeight: 800,
+                  color: "var(--secondary)",
+                  lineHeight: 1,
+                }}
+              >
+                {statsVisible ? (
+                  <Counter end={s.end} suffix={s.suffix} />
+                ) : (
+                  <span>
+                    {s.end.toLocaleString()}
+                    {s.suffix}
+                  </span>
+                )}
+              </div>
+              <div
+                style={{
+                  color: "rgba(255,255,255,0.7)",
+                  fontWeight: 500,
+                  marginTop: "0.35rem",
+                  fontSize: "0.95rem",
+                }}
+              >
+                {s.label}
               </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-gray-900 mb-4">
-              How It Works
-            </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Three simple steps to get your service
+      {/* ══════════════════ FEATURES / WHY US ══════════════════ */}
+      <section
+        id="why-us"
+        style={{ padding: "6rem 1.5rem", background: "var(--background)" }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          {/* heading */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "3rem",
+              alignItems: "center",
+              marginBottom: "4rem",
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  background: "rgba(26,67,40,0.08)",
+                  border: "1px solid rgba(26,67,40,0.15)",
+                  borderRadius: 50,
+                  padding: "5px 14px",
+                  marginBottom: "1rem",
+                }}
+              >
+                <i
+                  className="fas fa-star"
+                  style={{ color: "var(--secondary)", fontSize: "0.8rem" }}
+                ></i>
+                <span
+                  style={{
+                    color: "var(--primary)",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Why Choose Us
+                </span>
+              </div>
+              <h2
+                style={{
+                  fontSize: "clamp(1.8rem,3.5vw,2.6rem)",
+                  fontWeight: 800,
+                  color: "var(--text)",
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.02em",
+                  margin: 0,
+                }}
+              >
+                Where Technology Meets
+                <br />
+                <span style={{ color: "var(--primary)" }}>
+                  Educational Excellence
+                </span>
+              </h2>
+            </div>
+            <p
+              style={{
+                color: "var(--text-muted)",
+                fontSize: "1.05rem",
+                lineHeight: 1.75,
+                margin: 0,
+              }}
+            >
+              We combine cutting-edge digital tools with deep educational
+              expertise to deliver services that are fast, reliable, and built
+              for the modern learner and professional.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(240px,1fr))",
+              gap: "1.5rem",
+            }}
+          >
             {[
               {
-                step: 1,
-                title: "Choose the service you need.",
-                icon: "fa-list-check",
+                icon: "fa-bolt-lightning",
+                color: "#1A4328",
+                title: "Rapid Processing",
+                desc: "Most services are completed within 24 hours. No waiting, no delays — just results.",
               },
               {
-                step: 2,
-                title: "Submit your request or contact us.",
-                icon: "fa-paper-plane",
+                icon: "fa-lock",
+                color: "#C49F34",
+                title: "Bank-Level Security",
+                desc: "Your personal data and transactions are protected with enterprise-grade encryption.",
               },
               {
-                step: 3,
-                title: "Receive your completed service quickly and securely.",
-                icon: "fa-check-circle",
+                icon: "fa-graduation-cap",
+                color: "#1A4328",
+                title: "Educational Experts",
+                desc: "Our consultants have years of experience navigating academic institutions and requirements.",
               },
-            ].map((item, idx) => (
-              <div key={idx} className="text-center">
-                <div className="w-20 h-20 bg-[#4169E1] rounded-full flex items-center justify-center text-white text-3xl font-bold mx-auto mb-6 shadow-lg">
-                  {item.step}
+              {
+                icon: "fa-headset",
+                color: "#C49F34",
+                title: "Always-On Support",
+                desc: "Reach our team via WhatsApp, phone, or email any time — day or night.",
+              },
+              {
+                icon: "fa-tags",
+                color: "#1A4328",
+                title: "Transparent Pricing",
+                desc: "No hidden charges. What you see is exactly what you pay — clear and upfront.",
+              },
+              {
+                icon: "fa-certificate",
+                color: "#C49F34",
+                title: "Verified Results",
+                desc: "98% satisfaction. Our track record speaks for itself — thousands of happy clients.",
+              },
+            ].map((f, i) => (
+              <div
+                key={i}
+                style={{
+                  background: "var(--surface)",
+                  borderRadius: 16,
+                  padding: "2rem",
+                  border: "1px solid var(--border)",
+                  transition: "all 0.3s",
+                  cursor: "default",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow =
+                    "0 12px 40px rgba(26,67,40,0.10)";
+                  e.currentTarget.style.borderColor = "var(--primary)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.borderColor = "var(--border)";
+                }}
+              >
+                <div
+                  style={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 12,
+                    background:
+                      f.color === "#1A4328"
+                        ? "rgba(26,67,40,0.1)"
+                        : "rgba(196,159,52,0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: "1rem",
+                  }}
+                >
+                  <i
+                    className={`fas ${f.icon}`}
+                    style={{ color: f.color, fontSize: "1.25rem" }}
+                  ></i>
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-4">
-                  {item.title}
+                <h3
+                  style={{
+                    fontWeight: 700,
+                    color: "var(--text)",
+                    marginBottom: "0.5rem",
+                    fontSize: "1.05rem",
+                  }}
+                >
+                  {f.title}
                 </h3>
-                <i className={`fas ${item.icon} text-[#FFC107] text-4xl`}></i>
-                {idx < 2 && (
-                  <div className="hidden md:block absolute top-1/2 left-full w-full h-0.5 bg-gray-200"></div>
-                )}
+                <p
+                  style={{
+                    color: "var(--text-muted)",
+                    fontSize: "0.9rem",
+                    lineHeight: 1.65,
+                    margin: 0,
+                  }}
+                >
+                  {f.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Testimonials + Submit Review */}
+      {/* ══════════════════ SERVICES ══════════════════ */}
       <section
-        id="testimonials"
-        className="py-20 bg-gradient-to-br from-blue-50 to-white"
+        id="services"
+        style={{ padding: "6rem 1.5rem", background: "var(--primary)" }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-gray-900 mb-4">
-              Testimonials
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "3rem" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(196,159,52,0.15)",
+                border: "1px solid rgba(196,159,52,0.3)",
+                borderRadius: 50,
+                padding: "5px 14px",
+                marginBottom: "1rem",
+              }}
+            >
+              <i
+                className="fas fa-layer-group"
+                style={{ color: "var(--secondary)", fontSize: "0.8rem" }}
+              ></i>
+              <span
+                style={{
+                  color: "var(--secondary)",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Our Services
+              </span>
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(1.8rem,3.5vw,2.6rem)",
+                fontWeight: 800,
+                color: "#fff",
+                margin: "0 0 0.75rem",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Everything You Need, Under One Roof
             </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              What our clients say about us
+            <p
+              style={{
+                color: "rgba(255,255,255,0.65)",
+                fontSize: "1.05rem",
+                maxWidth: 520,
+                margin: "0 auto",
+              }}
+            >
+              Browse our full catalogue of technology and educational services —
+              all available online.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8 mb-16">
-            {approvedTestimonials.map((testimonial, idx) => (
-              <div
-                key={idx}
-                className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300"
-              >
-                <div className="text-[#FFC107] text-2xl mb-4">
-                  {Array(testimonial.rating)
-                    .fill(0)
-                    .map((_, i) => (
-                      <i key={i} className="fas fa-star"></i>
+
+          {/* Category tabs */}
+          {Object.keys(services).length > 1 && (
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "0.75rem",
+                justifyContent: "center",
+                marginBottom: "2.5rem",
+              }}
+            >
+              {Object.keys(services).map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setActiveCategory(cat)}
+                  style={{
+                    background:
+                      activeCategory === cat
+                        ? "var(--secondary)"
+                        : "rgba(255,255,255,0.08)",
+                    color:
+                      activeCategory === cat ? "#fff" : "rgba(255,255,255,0.7)",
+                    border:
+                      activeCategory === cat
+                        ? "none"
+                        : "1px solid rgba(255,255,255,0.15)",
+                    borderRadius: 50,
+                    padding: "8px 20px",
+                    fontWeight: 600,
+                    fontSize: "0.88rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Service cards */}
+          {Object.entries(services).map(
+            ([category, items]) =>
+              (activeCategory === null || activeCategory === category) && (
+                <div key={category}>
+                  {Object.keys(services).length === 1 && (
+                    <h3
+                      style={{
+                        color: "rgba(255,255,255,0.85)",
+                        fontWeight: 700,
+                        fontSize: "1.2rem",
+                        marginBottom: "1.5rem",
+                        paddingLeft: "0.75rem",
+                        borderLeft: "3px solid var(--secondary)",
+                      }}
+                    >
+                      {category}
+                    </h3>
+                  )}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(260px,1fr))",
+                      gap: "1.25rem",
+                    }}
+                  >
+                    {items.map((service, idx) => (
+                      <div
+                        key={idx}
+                        style={{
+                          background: "var(--surface)",
+                          borderRadius: 16,
+                          overflow: "hidden",
+                          border: "1px solid rgba(255,255,255,0.08)",
+                          transition: "all 0.3s",
+                          display: "flex",
+                          flexDirection: "column",
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = "translateY(-5px)";
+                          e.currentTarget.style.boxShadow =
+                            "0 16px 48px rgba(0,0,0,0.3)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = "none";
+                          e.currentTarget.style.boxShadow = "none";
+                        }}
+                      >
+                        {/* Image */}
+                        <div
+                          style={{
+                            position: "relative",
+                            height: 180,
+                            overflow: "hidden",
+                            cursor: "pointer",
+                          }}
+                          onClick={() =>
+                            navigate(`/service-form/${service.id}`)
+                          }
+                        >
+                          <img
+                            src={service.image}
+                            alt={service.name}
+                            style={{
+                              width: "100%",
+                              height: "100%",
+                              objectFit: "cover",
+                              transition: "transform 0.5s",
+                            }}
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.transform = "scale(1.08)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.transform = "none")
+                            }
+                          />
+                          <div
+                            style={{
+                              position: "absolute",
+                              inset: 0,
+                              background:
+                                "linear-gradient(to top, rgba(26,67,40,0.5), transparent)",
+                            }}
+                          />
+                          <button
+                            onClick={(e) => handleShare(service, e)}
+                            style={{
+                              position: "absolute",
+                              top: 10,
+                              right: 10,
+                              width: 36,
+                              height: 36,
+                              background: "rgba(255,255,255,0.9)",
+                              backdropFilter: "blur(4px)",
+                              border: "none",
+                              borderRadius: "50%",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              color: "var(--primary)",
+                              fontSize: "0.85rem",
+                              transition: "all 0.2s",
+                            }}
+                            aria-label={`Share ${service.name}`}
+                          >
+                            <i className="fas fa-share-nodes"></i>
+                          </button>
+                        </div>
+
+                        {/* Content */}
+                        <div
+                          style={{
+                            padding: "1.25rem",
+                            display: "flex",
+                            flexDirection: "column",
+                            flex: 1,
+                          }}
+                        >
+                          <h4
+                            style={{
+                              fontWeight: 700,
+                              color: "var(--text)",
+                              marginBottom: "0.4rem",
+                              fontSize: "1rem",
+                              cursor: "pointer",
+                              transition: "color 0.2s",
+                            }}
+                            onClick={() =>
+                              navigate(`/service-form/${service.id}`)
+                            }
+                            onMouseEnter={(e) =>
+                              (e.currentTarget.style.color = "var(--primary)")
+                            }
+                            onMouseLeave={(e) =>
+                              (e.currentTarget.style.color = "var(--text)")
+                            }
+                          >
+                            {service.name}
+                          </h4>
+                          <p
+                            style={{
+                              color: "var(--text-muted)",
+                              fontSize: "0.85rem",
+                              lineHeight: 1.6,
+                              flex: 1,
+                              marginBottom: "1rem",
+                            }}
+                          >
+                            {service.description}
+                          </p>
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "space-between",
+                              marginBottom: "0.85rem",
+                            }}
+                          >
+                            <span
+                              style={{
+                                fontWeight: 800,
+                                color: "var(--primary)",
+                                fontSize: "1.2rem",
+                              }}
+                            >
+                              {service.price}
+                            </span>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                copyLink(service);
+                              }}
+                              style={{
+                                background: "none",
+                                border: "none",
+                                cursor: "pointer",
+                                color: "var(--text-muted)",
+                                fontSize: "0.78rem",
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 4,
+                              }}
+                            >
+                              <i className="fas fa-copy"></i> Copy link
+                            </button>
+                          </div>
+                          <button
+                            onClick={() =>
+                              navigate(`/service-form/${service.id}`)
+                            }
+                            style={{
+                              width: "100%",
+                              background: "var(--primary)",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: 10,
+                              padding: "11px 0",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 8,
+                              transition: "all 0.2s",
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background =
+                                "var(--primary-hover)";
+                              e.currentTarget.style.transform =
+                                "translateY(-1px)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background =
+                                "var(--primary)";
+                              e.currentTarget.style.transform = "none";
+                            }}
+                          >
+                            <i className="fas fa-arrow-right-long"></i> Order
+                            Now
+                          </button>
+                        </div>
+                      </div>
                     ))}
+                  </div>
                 </div>
-                <p className="text-gray-700 text-lg mb-6 italic">
-                  "{testimonial.text}"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-[#4169E1] rounded-full flex items-center justify-center text-white font-bold">
-                    {testimonial.name.charAt(0)}
+              ),
+          )}
+        </div>
+      </section>
+
+      {/* ══════════════════ HOW IT WORKS ══════════════════ */}
+      <section
+        id="how-it-works"
+        style={{ padding: "6rem 1.5rem", background: "var(--background)" }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(26,67,40,0.08)",
+                border: "1px solid rgba(26,67,40,0.15)",
+                borderRadius: 50,
+                padding: "5px 14px",
+                marginBottom: "1rem",
+              }}
+            >
+              <i
+                className="fas fa-circle-nodes"
+                style={{ color: "var(--primary)", fontSize: "0.8rem" }}
+              ></i>
+              <span
+                style={{
+                  color: "var(--primary)",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                How It Works
+              </span>
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(1.8rem,3.5vw,2.6rem)",
+                fontWeight: 800,
+                color: "var(--text)",
+                margin: "0 0 0.75rem",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Three Steps to Get Started
+            </h2>
+            <p
+              style={{
+                color: "var(--text-muted)",
+                fontSize: "1.05rem",
+                maxWidth: 500,
+                margin: "0 auto",
+              }}
+            >
+              Simple, fast, and stress-free from start to finish.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(260px,1fr))",
+              gap: "2rem",
+            }}
+          >
+            {[
+              {
+                step: "01",
+                icon: "fa-magnifying-glass",
+                title: "Choose a Service",
+                desc: "Browse our catalogue and pick the service that matches your needs.",
+              },
+              {
+                step: "02",
+                icon: "fa-file-signature",
+                title: "Submit Your Details",
+                desc: "Fill in the request form. It takes less than 3 minutes.",
+              },
+              {
+                step: "03",
+                icon: "fa-circle-check",
+                title: "Receive Your Result",
+                desc: "We process your request and deliver securely — fast.",
+              },
+            ].map((item, i) => (
+              <div key={i} style={{ position: "relative" }}>
+                {/* connector line (desktop) */}
+                {i < 2 && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: 32,
+                      left: "calc(100% - 1rem)",
+                      width: "2rem",
+                      height: 2,
+                      background: "var(--border)",
+                      zIndex: 0,
+                      display: "none",
+                    }}
+                    className="step-connector"
+                  />
+                )}
+                <div
+                  style={{
+                    background: "var(--surface)",
+                    borderRadius: 20,
+                    padding: "2.5rem 2rem",
+                    border: "1px solid var(--border)",
+                    position: "relative",
+                    zIndex: 1,
+                    transition: "all 0.3s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = "var(--primary)";
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 12px 40px rgba(26,67,40,0.08)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = "var(--border)";
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: "3rem",
+                      fontWeight: 900,
+                      color: "rgba(26,67,40,0.06)",
+                      lineHeight: 1,
+                      display: "block",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {item.step}
+                  </span>
+                  <div
+                    style={{
+                      width: 52,
+                      height: 52,
+                      borderRadius: 14,
+                      background: "var(--primary)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      marginBottom: "1.25rem",
+                    }}
+                  >
+                    <i
+                      className={`fas ${item.icon}`}
+                      style={{ color: "var(--secondary)", fontSize: "1.3rem" }}
+                    ></i>
                   </div>
-                  <div className="text-gray-500 font-medium">
-                    {testimonial.name}
-                  </div>
+                  <h3
+                    style={{
+                      fontWeight: 700,
+                      color: "var(--text)",
+                      fontSize: "1.1rem",
+                      marginBottom: "0.5rem",
+                    }}
+                  >
+                    {item.title}
+                  </h3>
+                  <p
+                    style={{
+                      color: "var(--text-muted)",
+                      fontSize: "0.92rem",
+                      lineHeight: 1.65,
+                      margin: 0,
+                    }}
+                  >
+                    {item.desc}
+                  </p>
                 </div>
               </div>
             ))}
           </div>
+        </div>
+      </section>
 
-          {/* Submit Review Form */}
-          <div className="bg-white p-8 rounded-2xl shadow-lg max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-              Submit Your Review
+      {/* ══════════════════ CTA BAND ══════════════════ */}
+      <section
+        style={{
+          padding: "5rem 1.5rem",
+          background: "var(--secondary)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: -60,
+            right: -60,
+            width: 300,
+            height: 300,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.08)",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: -80,
+            left: -40,
+            width: 240,
+            height: 240,
+            borderRadius: "50%",
+            background: "rgba(255,255,255,0.06)",
+          }}
+        />
+        <div
+          style={{
+            maxWidth: 860,
+            margin: "0 auto",
+            textAlign: "center",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <h2
+            style={{
+              fontSize: "clamp(1.8rem,4vw,2.8rem)",
+              fontWeight: 800,
+              color: "#fff",
+              margin: "0 0 1rem",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Ready to Take the Next Step?
+          </h2>
+          <p
+            style={{
+              color: "rgba(255,255,255,0.85)",
+              fontSize: "1.1rem",
+              marginBottom: "2.5rem",
+              lineHeight: 1.7,
+            }}
+          >
+            Join thousands of clients who trust IFFY'S TECH EDU CONSULT for
+            their educational and digital needs.
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "1rem",
+            }}
+          >
+            <button
+              onClick={() => scrollTo("services")}
+              style={{
+                background: "var(--primary)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 50,
+                padding: "14px 32px",
+                fontWeight: 700,
+                fontSize: "1rem",
+                cursor: "pointer",
+                boxShadow: "0 8px 24px rgba(26,67,40,0.35)",
+                transition: "all 0.25s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 12px 32px rgba(26,67,40,0.5)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow =
+                  "0 8px 24px rgba(26,67,40,0.35)";
+              }}
+            >
+              Browse Services
+            </button>
+            <a
+              href={`https://wa.me/${settings.whatsappNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                background: "#25D366",
+                color: "#fff",
+                borderRadius: 50,
+                padding: "14px 32px",
+                fontWeight: 700,
+                fontSize: "1rem",
+                textDecoration: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 10,
+                transition: "all 0.25s",
+                boxShadow: "0 8px 24px rgba(37,211,102,0.35)",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+              }}
+            >
+              <i className="fab fa-whatsapp" style={{ fontSize: "1.2rem" }}></i>{" "}
+              Chat on WhatsApp
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ══════════════════ TESTIMONIALS ══════════════════ */}
+      <section
+        id="testimonials"
+        style={{ padding: "6rem 1.5rem", background: "var(--background)" }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(26,67,40,0.08)",
+                border: "1px solid rgba(26,67,40,0.15)",
+                borderRadius: 50,
+                padding: "5px 14px",
+                marginBottom: "1rem",
+              }}
+            >
+              <i
+                className="fas fa-comments"
+                style={{ color: "var(--primary)", fontSize: "0.8rem" }}
+              ></i>
+              <span
+                style={{
+                  color: "var(--primary)",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Client Reviews
+              </span>
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(1.8rem,3.5vw,2.6rem)",
+                fontWeight: 800,
+                color: "var(--text)",
+                margin: "0 0 0.75rem",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              What Our Clients Say
+            </h2>
+            <p
+              style={{
+                color: "var(--text-muted)",
+                fontSize: "1.05rem",
+                maxWidth: 480,
+                margin: "0 auto",
+              }}
+            >
+              Real experiences from real people who rely on us every day.
+            </p>
+          </div>
+
+          {approvedTestimonials.length > 0 ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(300px,1fr))",
+                gap: "1.5rem",
+                marginBottom: "4rem",
+              }}
+            >
+              {approvedTestimonials.map((t, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "var(--surface)",
+                    borderRadius: 18,
+                    padding: "2rem",
+                    border: "1px solid var(--border)",
+                    transition: "all 0.3s",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = "translateY(-4px)";
+                    e.currentTarget.style.boxShadow =
+                      "0 12px 40px rgba(26,67,40,0.08)";
+                    e.currentTarget.style.borderColor = "var(--primary)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = "none";
+                    e.currentTarget.style.boxShadow = "none";
+                    e.currentTarget.style.borderColor = "var(--border)";
+                  }}
+                >
+                  {/* quote icon */}
+                  <i
+                    className="fas fa-quote-left"
+                    style={{
+                      color: "var(--secondary)",
+                      fontSize: "1.5rem",
+                      marginBottom: "0.75rem",
+                      display: "block",
+                      opacity: 0.7,
+                    }}
+                  ></i>
+                  {/* stars */}
+                  <div
+                    style={{ display: "flex", gap: 3, marginBottom: "0.85rem" }}
+                  >
+                    {Array(5)
+                      .fill(0)
+                      .map((_, si) => (
+                        <i
+                          key={si}
+                          className="fas fa-star"
+                          style={{
+                            color:
+                              si < t.rating
+                                ? "var(--secondary)"
+                                : "var(--border)",
+                            fontSize: "0.85rem",
+                          }}
+                        ></i>
+                      ))}
+                  </div>
+                  <p
+                    style={{
+                      color: "var(--text)",
+                      fontSize: "0.95rem",
+                      lineHeight: 1.7,
+                      fontStyle: "italic",
+                      marginBottom: "1.5rem",
+                    }}
+                  >
+                    "{t.text}"
+                  </p>
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: 12 }}
+                  >
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: "50%",
+                        background: "var(--primary)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "var(--secondary)",
+                        fontWeight: 800,
+                        fontSize: "1.1rem",
+                      }}
+                    >
+                      {t.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          fontWeight: 700,
+                          color: "var(--text)",
+                          fontSize: "0.95rem",
+                        }}
+                      >
+                        {t.name}
+                      </div>
+                      <div
+                        style={{
+                          color: "var(--text-muted)",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        Verified Client
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "3rem",
+                color: "var(--text-muted)",
+                marginBottom: "4rem",
+              }}
+            >
+              <i
+                className="fas fa-comment-dots"
+                style={{
+                  fontSize: "2.5rem",
+                  marginBottom: "0.75rem",
+                  display: "block",
+                  opacity: 0.3,
+                }}
+              ></i>
+              No reviews yet. Be the first to share your experience!
+            </div>
+          )}
+
+          {/* Submit review */}
+          <div
+            style={{
+              maxWidth: 640,
+              margin: "0 auto",
+              background: "var(--surface)",
+              borderRadius: 20,
+              padding: "2.5rem",
+              border: "1px solid var(--border)",
+              boxShadow: "0 8px 40px rgba(26,67,40,0.06)",
+            }}
+          >
+            <h3
+              style={{
+                fontWeight: 800,
+                color: "var(--text)",
+                fontSize: "1.4rem",
+                marginBottom: "0.4rem",
+                textAlign: "center",
+              }}
+            >
+              Share Your Experience
             </h3>
-            <form onSubmit={handleTestimonialSubmit} className="space-y-6">
+            <p
+              style={{
+                color: "var(--text-muted)",
+                textAlign: "center",
+                marginBottom: "2rem",
+                fontSize: "0.92rem",
+              }}
+            >
+              Your feedback helps us serve you better.
+            </p>
+            <form
+              onSubmit={handleTestimonialSubmit}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "1.25rem",
+              }}
+            >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginBottom: 6,
+                    fontSize: "0.9rem",
+                  }}
+                >
                   Your Name
                 </label>
                 <input
@@ -743,14 +1944,39 @@ export default function HomePage() {
                       name: e.target.value,
                     })
                   }
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20"
+                  style={{
+                    width: "100%",
+                    padding: "11px 16px",
+                    borderRadius: 10,
+                    border: "1.5px solid var(--border)",
+                    background: "var(--background)",
+                    color: "var(--text)",
+                    fontSize: "0.95rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                    transition: "border 0.2s",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--primary)")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--border)")
+                  }
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginBottom: 6,
+                    fontSize: "0.9rem",
+                  }}
+                >
                   Rating
                 </label>
-                <div className="flex gap-2">
+                <div style={{ display: "flex", gap: 8 }}>
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -758,7 +1984,18 @@ export default function HomePage() {
                       onClick={() =>
                         setTestimonialForm({ ...testimonialForm, rating: star })
                       }
-                      className={`text-3xl ${star <= testimonialForm.rating ? "text-[#FFC107]" : "text-gray-300"}`}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        fontSize: "1.75rem",
+                        color:
+                          star <= testimonialForm.rating
+                            ? "var(--secondary)"
+                            : "var(--border)",
+                        transition: "color 0.15s",
+                        padding: 0,
+                      }}
                     >
                       <i className="fas fa-star"></i>
                     </button>
@@ -766,11 +2003,20 @@ export default function HomePage() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  style={{
+                    display: "block",
+                    fontWeight: 600,
+                    color: "var(--text)",
+                    marginBottom: 6,
+                    fontSize: "0.9rem",
+                  }}
+                >
                   Your Review
                 </label>
                 <textarea
                   required
+                  rows={4}
                   value={testimonialForm.text}
                   onChange={(e) =>
                     setTestimonialForm({
@@ -778,195 +2024,533 @@ export default function HomePage() {
                       text: e.target.value,
                     })
                   }
-                  rows={4}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20"
+                  style={{
+                    width: "100%",
+                    padding: "11px 16px",
+                    borderRadius: 10,
+                    border: "1.5px solid var(--border)",
+                    background: "var(--background)",
+                    color: "var(--text)",
+                    fontSize: "0.95rem",
+                    outline: "none",
+                    resize: "vertical",
+                    boxSizing: "border-box",
+                    transition: "border 0.2s",
+                  }}
+                  onFocus={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--primary)")
+                  }
+                  onBlur={(e) =>
+                    (e.currentTarget.style.borderColor = "var(--border)")
+                  }
                 />
               </div>
               <button
                 type="submit"
-                className="w-full bg-[#4169E1] hover:bg-[#3658c9] text-white py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:scale-105"
+                style={{
+                  background: "var(--primary)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "13px 0",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--primary-hover)";
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "var(--primary)";
+                  e.currentTarget.style.transform = "none";
+                }}
               >
-                Submit Review
+                <i className="fas fa-paper-plane"></i> Submit Review
               </button>
             </form>
           </div>
         </div>
       </section>
 
-      {/* Call To Action */}
-      <section className="py-20 bg-[#4169E1]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-white mb-6">
-            Ready to Get Started?
-          </h2>
-          <p className="text-blue-100 text-lg mb-8">
-            Contact Ace Educational Consult today for fast and reliable
-            educational solutions.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
-            <button
-              onClick={() => scrollToSection("contact")}
-              className="bg-white hover:bg-gray-100 text-[#4169E1] px-8 py-4 rounded-full font-semibold text-lg transition-all hover:shadow-xl hover:scale-105"
-            >
-              Contact Us
-            </button>
-            <a
-              href={`https://wa.me/${settings.whatsappNumber}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-[#25D366] hover:bg-[#1ebe57] text-white px-8 py-4 rounded-full font-semibold text-lg transition-all hover:shadow-xl hover:scale-105 flex items-center gap-2"
-            >
-              <i className="fab fa-whatsapp text-xl"></i>
-              WhatsApp Support
-            </a>
+      {/* ══════════════════ WHATSAPP COMMUNITY ══════════════════ */}
+      <section
+        id="newsletter"
+        style={{
+          padding: "5rem 1.5rem",
+          background: "var(--primary)",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            position: "absolute",
+            top: -100,
+            right: -100,
+            width: 350,
+            height: 350,
+            borderRadius: "50%",
+            background: "rgba(196,159,52,0.06)",
+          }}
+        />
+        <div
+          style={{
+            maxWidth: 700,
+            margin: "0 auto",
+            textAlign: "center",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              width: 72,
+              height: 72,
+              borderRadius: "50%",
+              background: "#25D366",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 1.5rem",
+              boxShadow: "0 8px 30px rgba(37,211,102,0.4)",
+            }}
+          >
+            <i
+              className="fab fa-whatsapp"
+              style={{ color: "#fff", fontSize: "2rem" }}
+            ></i>
           </div>
-        </div>
-      </section>
-
-      {/* Stay Updated - WhatsApp Group */}
-      <section id="newsletter" className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <div className="w-20 h-20 bg-[#25D366] rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
-            <i className="fab fa-whatsapp text-white text-4xl"></i>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Stay Updated
+          <h2
+            style={{
+              fontWeight: 800,
+              color: "#fff",
+              fontSize: "clamp(1.6rem,3vw,2.2rem)",
+              margin: "0 0 0.75rem",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Stay Ahead — Join Our Community
           </h2>
-          <p className="text-gray-600 mb-8 max-w-xl mx-auto">
-            Join our WhatsApp group to get the latest updates on admission
-            opportunities, registration deadlines, educational news, and
-            exclusive offers — directly on your phone.
+          <p
+            style={{
+              color: "rgba(255,255,255,0.7)",
+              lineHeight: 1.75,
+              marginBottom: "2rem",
+              fontSize: "1.02rem",
+              maxWidth: 520,
+              margin: "0 auto 2rem",
+            }}
+          >
+            Get instant alerts on new services, registration deadlines,
+            admission openings and exclusive offers straight to your WhatsApp.
           </p>
           {settings.whatsappGroupLink ? (
             <a
               href={settings.whatsappGroupLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-[#25D366] hover:bg-[#1ebe57] text-white px-10 py-4 rounded-full font-semibold text-lg transition-all hover:shadow-xl hover:scale-105"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 12,
+                background: "#25D366",
+                color: "#fff",
+                borderRadius: 50,
+                padding: "14px 36px",
+                fontWeight: 700,
+                fontSize: "1rem",
+                textDecoration: "none",
+                boxShadow: "0 8px 28px rgba(37,211,102,0.4)",
+                transition: "all 0.25s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-2px)";
+                e.currentTarget.style.boxShadow =
+                  "0 12px 36px rgba(37,211,102,0.55)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow =
+                  "0 8px 28px rgba(37,211,102,0.4)";
+              }}
             >
-              <i className="fab fa-whatsapp text-2xl"></i>
+              <i className="fab fa-whatsapp" style={{ fontSize: "1.3rem" }}></i>{" "}
               Join Our WhatsApp Group
             </a>
           ) : (
-            <span className="inline-flex items-center gap-3 bg-[#25D366]/50 text-white px-10 py-4 rounded-full font-semibold text-lg cursor-not-allowed select-none">
-              <i className="fab fa-whatsapp text-2xl"></i>
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 12,
+                background: "rgba(37,211,102,0.4)",
+                color: "#fff",
+                borderRadius: 50,
+                padding: "14px 36px",
+                fontWeight: 700,
+                fontSize: "1rem",
+                cursor: "not-allowed",
+                opacity: 0.6,
+              }}
+            >
+              <i className="fab fa-whatsapp" style={{ fontSize: "1.3rem" }}></i>{" "}
               Join Our WhatsApp Group
             </span>
           )}
         </div>
       </section>
 
-      {/* Contact Section */}
-      <section id="contact" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-[clamp(1.8rem,3vw,2.5rem)] font-bold text-gray-900 mb-4">
-              Contact Us
+      {/* ══════════════════ CONTACT ══════════════════ */}
+      <section
+        id="contact"
+        style={{ padding: "6rem 1.5rem", background: "var(--background)" }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                background: "rgba(26,67,40,0.08)",
+                border: "1px solid rgba(26,67,40,0.15)",
+                borderRadius: 50,
+                padding: "5px 14px",
+                marginBottom: "1rem",
+              }}
+            >
+              <i
+                className="fas fa-envelope"
+                style={{ color: "var(--primary)", fontSize: "0.8rem" }}
+              ></i>
+              <span
+                style={{
+                  color: "var(--primary)",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                Contact Us
+              </span>
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(1.8rem,3.5vw,2.6rem)",
+                fontWeight: 800,
+                color: "var(--text)",
+                margin: "0 0 0.75rem",
+                letterSpacing: "-0.02em",
+              }}
+            >
+              Let's Start a Conversation
             </h2>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Get in touch with us today
+            <p
+              style={{
+                color: "var(--text-muted)",
+                fontSize: "1.05rem",
+                maxWidth: 460,
+                margin: "0 auto",
+              }}
+            >
+              Have a question or need help? Reach us through any of the channels
+              below.
             </p>
           </div>
-          <div className="grid lg:grid-cols-2 gap-12">
+
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: "3rem",
+              alignItems: "start",
+            }}
+          >
+            {/* Info panel */}
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-8">
-                Office Information
-              </h3>
-              <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-[#4169E1] rounded-xl flex items-center justify-center text-white text-xl shrink-0">
-                    <i className="fas fa-phone"></i>
+              <div
+                style={{
+                  background: "var(--primary)",
+                  borderRadius: 20,
+                  padding: "2.5rem",
+                  marginBottom: "1.5rem",
+                }}
+              >
+                <h3
+                  style={{
+                    fontWeight: 700,
+                    color: "#fff",
+                    fontSize: "1.2rem",
+                    marginBottom: "2rem",
+                  }}
+                >
+                  Office Information
+                </h3>
+                {[
+                  {
+                    icon: "fa-phone",
+                    label: "Phone Number",
+                    value: settings.phoneNumber,
+                  },
+                  {
+                    icon: "fa-envelope",
+                    label: "Email Address",
+                    value: settings.email,
+                  },
+                  {
+                    icon: "fa-location-dot",
+                    label: "Office Address",
+                    value: settings.address,
+                  },
+                  {
+                    icon: "fa-clock",
+                    label: "Business Hours",
+                    value: settings.businessHours,
+                  },
+                ].map((item, i) => (
+                  <div
+                    key={i}
+                    style={{
+                      display: "flex",
+                      alignItems: "flex-start",
+                      gap: 16,
+                      marginBottom: i < 3 ? "1.5rem" : 0,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 44,
+                        height: 44,
+                        borderRadius: 12,
+                        background: "rgba(196,159,52,0.15)",
+                        border: "1px solid rgba(196,159,52,0.25)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <i
+                        className={`fas ${item.icon}`}
+                        style={{ color: "var(--secondary)", fontSize: "1rem" }}
+                      ></i>
+                    </div>
+                    <div>
+                      <div
+                        style={{
+                          color: "rgba(255,255,255,0.55)",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em",
+                          marginBottom: 3,
+                        }}
+                      >
+                        {item.label}
+                      </div>
+                      <div
+                        style={{
+                          color: "#fff",
+                          fontWeight: 500,
+                          fontSize: "0.95rem",
+                        }}
+                      >
+                        {item.value || "—"}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Phone Number
-                    </h4>
-                    <p className="text-gray-600">{settings.phoneNumber}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-[#4169E1] rounded-xl flex items-center justify-center text-white text-xl shrink-0">
-                    <i className="fas fa-envelope"></i>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Email Address
-                    </h4>
-                    <p className="text-gray-600">{settings.email}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-[#4169E1] rounded-xl flex items-center justify-center text-white text-xl shrink-0">
-                    <i className="fas fa-location-dot"></i>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Office Address
-                    </h4>
-                    <p className="text-gray-600">{settings.address}</p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-[#4169E1] rounded-xl flex items-center justify-center text-white text-xl shrink-0">
-                    <i className="fas fa-clock"></i>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-gray-900 mb-1">
-                      Business Hours
-                    </h4>
-                    <p className="text-gray-600">{settings.businessHours}</p>
-                  </div>
-                </div>
+                ))}
+              </div>
+
+              {/* Social links */}
+              <div
+                style={{
+                  background: "var(--surface)",
+                  borderRadius: 16,
+                  padding: "1.5rem",
+                  border: "1px solid var(--border)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                }}
+              >
+                <span
+                  style={{
+                    color: "var(--text-muted)",
+                    fontSize: "0.88rem",
+                    fontWeight: 600,
+                    marginRight: "0.5rem",
+                  }}
+                >
+                  Follow us:
+                </span>
+                {[
+                  {
+                    icon: "fa-facebook-f",
+                    href: settings.socialLinks?.facebook,
+                    label: "Facebook",
+                  },
+                  {
+                    icon: "fa-x-twitter",
+                    href: settings.socialLinks?.twitter,
+                    label: "Twitter / X",
+                  },
+                  {
+                    icon: "fa-instagram",
+                    href: settings.socialLinks?.instagram,
+                    label: "Instagram",
+                  },
+                  {
+                    icon: "fa-linkedin-in",
+                    href: settings.socialLinks?.linkedin,
+                    label: "LinkedIn",
+                  },
+                ].map((s) => (
+                  <a
+                    key={s.icon}
+                    href={s.href || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={s.label}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: "50%",
+                      background: "var(--background)",
+                      border: "1px solid var(--border)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "var(--text-muted)",
+                      textDecoration: "none",
+                      fontSize: "0.9rem",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "var(--primary)";
+                      e.currentTarget.style.color = "#fff";
+                      e.currentTarget.style.borderColor = "var(--primary)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "var(--background)";
+                      e.currentTarget.style.color = "var(--text-muted)";
+                      e.currentTarget.style.borderColor = "var(--border)";
+                    }}
+                  >
+                    <i className={`fab ${s.icon}`}></i>
+                  </a>
+                ))}
               </div>
             </div>
-            <div className="bg-white p-8 rounded-2xl shadow-lg">
-              <form onSubmit={handleContactSubmit} className="space-y-6">
+
+            {/* Contact form */}
+            <div
+              style={{
+                background: "var(--surface)",
+                borderRadius: 20,
+                padding: "2.5rem",
+                border: "1px solid var(--border)",
+                boxShadow: "0 8px 40px rgba(26,67,40,0.06)",
+              }}
+            >
+              <h3
+                style={{
+                  fontWeight: 800,
+                  color: "var(--text)",
+                  fontSize: "1.25rem",
+                  marginBottom: "1.75rem",
+                }}
+              >
+                Send Us a Message
+              </h3>
+              <form
+                onSubmit={handleContactSubmit}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "1.2rem",
+                }}
+              >
+                {[
+                  {
+                    label: "Full Name",
+                    type: "text",
+                    key: "name",
+                    required: true,
+                  },
+                  {
+                    label: "Email Address",
+                    type: "email",
+                    key: "email",
+                    required: true,
+                  },
+                  {
+                    label: "Phone Number",
+                    type: "tel",
+                    key: "phoneNumber",
+                    required: false,
+                  },
+                ].map((f) => (
+                  <div key={f.key}>
+                    <label
+                      style={{
+                        display: "block",
+                        fontWeight: 600,
+                        color: "var(--text)",
+                        marginBottom: 6,
+                        fontSize: "0.9rem",
+                      }}
+                    >
+                      {f.label}
+                    </label>
+                    <input
+                      type={f.type}
+                      required={f.required}
+                      value={contactForm[f.key]}
+                      onChange={(e) =>
+                        setContactForm({
+                          ...contactForm,
+                          [f.key]: e.target.value,
+                        })
+                      }
+                      style={{
+                        width: "100%",
+                        padding: "11px 16px",
+                        borderRadius: 10,
+                        border: "1.5px solid var(--border)",
+                        background: "var(--background)",
+                        color: "var(--text)",
+                        fontSize: "0.95rem",
+                        outline: "none",
+                        boxSizing: "border-box",
+                        transition: "border 0.2s",
+                      }}
+                      onFocus={(e) =>
+                        (e.currentTarget.style.borderColor = "var(--primary)")
+                      }
+                      onBlur={(e) =>
+                        (e.currentTarget.style.borderColor = "var(--border)")
+                      }
+                    />
+                  </div>
+                ))}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={contactForm.name}
-                    onChange={(e) =>
-                      setContactForm({ ...contactForm, name: e.target.value })
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={contactForm.email}
-                    onChange={(e) =>
-                      setContactForm({ ...contactForm, email: e.target.value })
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    value={contactForm.phoneNumber}
-                    onChange={(e) =>
-                      setContactForm({
-                        ...contactForm,
-                        phoneNumber: e.target.value,
-                      })
-                    }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label
+                    style={{
+                      display: "block",
+                      fontWeight: 600,
+                      color: "var(--text)",
+                      marginBottom: 6,
+                      fontSize: "0.9rem",
+                    }}
+                  >
                     Message
                   </label>
                   <textarea
@@ -979,14 +2563,54 @@ export default function HomePage() {
                         message: e.target.value,
                       })
                     }
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20"
+                    style={{
+                      width: "100%",
+                      padding: "11px 16px",
+                      borderRadius: 10,
+                      border: "1.5px solid var(--border)",
+                      background: "var(--background)",
+                      color: "var(--text)",
+                      fontSize: "0.95rem",
+                      outline: "none",
+                      resize: "vertical",
+                      boxSizing: "border-box",
+                      transition: "border 0.2s",
+                    }}
+                    onFocus={(e) =>
+                      (e.currentTarget.style.borderColor = "var(--primary)")
+                    }
+                    onBlur={(e) =>
+                      (e.currentTarget.style.borderColor = "var(--border)")
+                    }
                   />
                 </div>
                 <button
                   type="submit"
-                  className="w-full bg-[#4169E1] hover:bg-[#3658c9] text-white py-4 rounded-xl font-semibold text-lg transition-all hover:shadow-lg hover:scale-105"
+                  style={{
+                    background: "var(--secondary)",
+                    color: "#fff",
+                    border: "none",
+                    borderRadius: 10,
+                    padding: "13px 0",
+                    fontWeight: 700,
+                    fontSize: "1rem",
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "var(--secondary-hover)";
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "var(--secondary)";
+                    e.currentTarget.style.transform = "none";
+                  }}
                 >
-                  Send Message
+                  <i className="fas fa-paper-plane"></i> Send Message
                 </button>
               </form>
             </div>
@@ -994,144 +2618,359 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-gray-900 text-white py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
-            <div className="md:col-span-2">
-              <div className="flex items-center gap-2 mb-6">
-                <img
-                  src={IffysLogo}
-                  alt="Ace Educational Consult Logo"
-                  className="h-16 object-contain"
-                />
-              </div>
-              <p className="text-gray-400 mb-6">
-                Your trusted partner for educational and digital services in
-                Nigeria.
+      {/* ══════════════════ FOOTER ══════════════════ */}
+      <footer
+        style={{
+          background: "#0D1F14",
+          color: "#fff",
+          padding: "4rem 1.5rem 0",
+        }}
+      >
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "2fr 1fr 1fr",
+              gap: "3rem",
+              paddingBottom: "3rem",
+              borderBottom: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            {/* Brand col */}
+            <div>
+              <img
+                src={IffysLogo}
+                alt="IFFY'S TECH EDU CONSULT"
+                style={{
+                  height: 56,
+                  objectFit: "contain",
+                  marginBottom: "1.25rem",
+                }}
+              />
+              <p
+                style={{
+                  color: "rgba(255,255,255,0.55)",
+                  lineHeight: 1.75,
+                  fontSize: "0.92rem",
+                  maxWidth: 320,
+                  marginBottom: "1.5rem",
+                }}
+              >
+                IFFY'S TECH EDU CONSULT — your trusted partner for technology
+                and educational consulting services across Nigeria.
               </p>
-              <div className="flex gap-4">
-                <a
-                  href={settings.socialLinks.facebook}
-                  className="w-10 h-10 bg-gray-800 hover:bg-[#4169E1] rounded-full flex items-center justify-center transition-colors"
-                >
-                  <i className="fab fa-facebook-f"></i>
-                </a>
-                <a
-                  href={settings.socialLinks.twitter}
-                  className="w-10 h-10 bg-gray-800 hover:bg-[#4169E1] rounded-full flex items-center justify-center transition-colors"
-                >
-                  <i className="fab fa-twitter"></i>
-                </a>
-                <a
-                  href={settings.socialLinks.instagram}
-                  className="w-10 h-10 bg-gray-800 hover:bg-[#4169E1] rounded-full flex items-center justify-center transition-colors"
-                >
-                  <i className="fab fa-instagram"></i>
-                </a>
-                <a
-                  href={settings.socialLinks.linkedin}
-                  className="w-10 h-10 bg-gray-800 hover:bg-[#4169E1] rounded-full flex items-center justify-center transition-colors"
-                >
-                  <i className="fab fa-linkedin-in"></i>
-                </a>
+              <div style={{ display: "flex", gap: "0.75rem" }}>
+                {[
+                  {
+                    icon: "fa-facebook-f",
+                    href: settings.socialLinks?.facebook,
+                  },
+                  { icon: "fa-x-twitter", href: settings.socialLinks?.twitter },
+                  {
+                    icon: "fa-instagram",
+                    href: settings.socialLinks?.instagram,
+                  },
+                  {
+                    icon: "fa-linkedin-in",
+                    href: settings.socialLinks?.linkedin,
+                  },
+                ].map((s) => (
+                  <a
+                    key={s.icon}
+                    href={s.href || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.08)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "rgba(255,255,255,0.6)",
+                      textDecoration: "none",
+                      fontSize: "0.85rem",
+                      transition: "all 0.2s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "var(--secondary)";
+                      e.currentTarget.style.color = "#fff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background =
+                        "rgba(255,255,255,0.08)";
+                      e.currentTarget.style.color = "rgba(255,255,255,0.6)";
+                    }}
+                  >
+                    <i className={`fab ${s.icon}`}></i>
+                  </a>
+                ))}
               </div>
             </div>
+
+            {/* Quick links */}
             <div>
-              <h4 className="font-bold text-lg mb-6">Quick Links</h4>
-              <ul className="space-y-3">
-                <li>
-                  <button
-                    onClick={() => scrollToSection("home")}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Home
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection("services")}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Services
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection("why-us")}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Why Us
-                  </button>
-                </li>
-                <li>
-                  <button
-                    onClick={() => scrollToSection("contact")}
-                    className="text-gray-400 hover:text-white transition-colors"
-                  >
-                    Contact
-                  </button>
-                </li>
+              <h4
+                style={{
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginBottom: "1.25rem",
+                  fontSize: "0.95rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.07em",
+                }}
+              >
+                Quick Links
+              </h4>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.65rem",
+                }}
+              >
+                {[
+                  { label: "Home", id: "home" },
+                  { label: "Services", id: "services" },
+                  { label: "Why Us", id: "why-us" },
+                  { label: "Testimonials", id: "testimonials" },
+                  { label: "Contact", id: "contact" },
+                ].map((l) => (
+                  <li key={l.id}>
+                    <button
+                      onClick={() => scrollTo(l.id)}
+                      style={{
+                        background: "none",
+                        border: "none",
+                        cursor: "pointer",
+                        color: "rgba(255,255,255,0.55)",
+                        fontSize: "0.92rem",
+                        transition: "color 0.2s",
+                        padding: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 8,
+                      }}
+                      onMouseEnter={(e) =>
+                        (e.currentTarget.style.color = "var(--secondary)")
+                      }
+                      onMouseLeave={(e) =>
+                        (e.currentTarget.style.color = "rgba(255,255,255,0.55)")
+                      }
+                    >
+                      <i
+                        className="fas fa-chevron-right"
+                        style={{ fontSize: "0.65rem" }}
+                      ></i>
+                      {l.label}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
+
+            {/* Contact info */}
             <div>
-              <h4 className="font-bold text-lg mb-6">Contact Info</h4>
-              <ul className="space-y-3 text-gray-400">
-                <li>{settings.phoneNumber}</li>
-                <li>{settings.email}</li>
-                <li>{settings.address}</li>
+              <h4
+                style={{
+                  fontWeight: 700,
+                  color: "#fff",
+                  marginBottom: "1.25rem",
+                  fontSize: "0.95rem",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.07em",
+                }}
+              >
+                Get in Touch
+              </h4>
+              <ul
+                style={{
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "0.85rem",
+                }}
+              >
+                {[
+                  { icon: "fa-phone", value: settings.phoneNumber },
+                  { icon: "fa-envelope", value: settings.email },
+                  { icon: "fa-location-dot", value: settings.address },
+                ].map(
+                  (item, i) =>
+                    item.value && (
+                      <li
+                        key={i}
+                        style={{
+                          display: "flex",
+                          gap: 10,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <i
+                          className={`fas ${item.icon}`}
+                          style={{
+                            color: "var(--secondary)",
+                            marginTop: 3,
+                            fontSize: "0.85rem",
+                            flexShrink: 0,
+                          }}
+                        ></i>
+                        <span
+                          style={{
+                            color: "rgba(255,255,255,0.55)",
+                            fontSize: "0.9rem",
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {item.value}
+                        </span>
+                      </li>
+                    ),
+                )}
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-gray-400">
-              <p>© 2026 Ace Educational Consult. All Rights Reserved.</p>
 
-              <p className="text-center md:text-right text-xs">
-                Website designed & developed by{" "}
-                <span className="font-medium text-white">Code Jeffrey</span>.
-                Need a professional website?{" "}
-                <a
-                  href="https://wa.me/2347015585397"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#ffc517] hover:text-yellow-300 transition-colors font-medium"
-                >
-                  Chat on WhatsApp
-                </a>
-              </p>
-            </div>
+          {/* Bottom bar */}
+          <div
+            style={{
+              padding: "1.5rem 0",
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: "0.75rem",
+            }}
+          >
+            <p
+              style={{
+                color: "rgba(255,255,255,0.4)",
+                fontSize: "0.85rem",
+                margin: 0,
+              }}
+            >
+              © {new Date().getFullYear()} IFFY'S TECH EDU CONSULT. All Rights
+              Reserved.
+            </p>
+            <p
+              style={{
+                color: "rgba(255,255,255,0.35)",
+                fontSize: "0.82rem",
+                margin: 0,
+              }}
+            >
+              Designed &amp; developed by{" "}
+              <span style={{ color: "rgba(255,255,255,0.7)", fontWeight: 600 }}>
+                Code Jeffrey
+              </span>
+              . Need a professional website?{" "}
+              <a
+                href="https://wa.me/2347015585397"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  color: "var(--secondary)",
+                  textDecoration: "none",
+                  fontWeight: 600,
+                }}
+              >
+                Chat on WhatsApp
+              </a>
+            </p>
           </div>
         </div>
       </footer>
 
-      {/* Floating My Orders Button */}
+      {/* ══════════════════ FLOATING BUTTONS ══════════════════ */}
+      {/* My Orders */}
       <button
         onClick={() => navigate("/my-orders")}
-        className="fixed bottom-28 right-6 z-50 group"
         aria-label="Track my orders"
+        style={{
+          position: "fixed",
+          bottom: 108,
+          right: 24,
+          zIndex: 50,
+          background: "var(--primary)",
+          color: "#fff",
+          border: "none",
+          borderRadius: 50,
+          padding: "12px 20px",
+          fontWeight: 700,
+          fontSize: "0.88rem",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          gap: 8,
+          boxShadow: "0 8px 24px rgba(26,67,40,0.4)",
+          transition: "all 0.2s",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = "translateY(-2px)";
+          e.currentTarget.style.boxShadow = "0 12px 32px rgba(26,67,40,0.5)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = "none";
+          e.currentTarget.style.boxShadow = "0 8px 24px rgba(26,67,40,0.4)";
+        }}
       >
-        <div className="relative flex items-center gap-2 bg-[#4169E1] hover:bg-[#3658c9] text-white pl-4 pr-5 py-3 rounded-full shadow-2xl hover:scale-105 transition-all">
-          <i className="fas fa-receipt text-lg"></i>
-          <span className="text-sm font-semibold">My Orders</span>
-          {hasPendingOrder && (
-            <span className="absolute -top-1.5 -right-1 size-4.5 bg-red-500 rounded-full border-2 border-white animate-pulse" />
-          )}
-        </div>
+        <i className="fas fa-receipt"></i>
+        <span>My Orders</span>
+        {hasPendingOrder && (
+          <span
+            style={{
+              position: "absolute",
+              top: -4,
+              right: -4,
+              width: 12,
+              height: 12,
+              borderRadius: "50%",
+              background: "#C84B31",
+              border: "2px solid #fff",
+              animation: "pulse-whatsapp 2s infinite",
+            }}
+          />
+        )}
       </button>
 
-      {/* Floating WhatsApp Button */}
+      {/* WhatsApp */}
       <a
         href={`https://wa.me/${settings.whatsappNumber}`}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 group"
+        className="group"
+        style={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 50,
+          display: "block",
+        }}
       >
-        <div className="w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center text-white text-3xl shadow-2xl pulse-whatsapp hover:scale-110 transition-transform">
+        <div
+          style={{
+            width: 60,
+            height: 60,
+            background: "#25D366",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "#fff",
+            fontSize: "1.75rem",
+            boxShadow: "0 8px 24px rgba(37,211,102,0.45)",
+            transition: "transform 0.2s",
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = "none")}
+        >
           <i className="fab fa-whatsapp"></i>
-        </div>
-        <div className="absolute bottom-full right-0 mb-3 bg-gray-900 text-white px-4 py-2 rounded-lg text-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Need Help? Chat with us!
         </div>
       </a>
     </div>
