@@ -1,254 +1,390 @@
 import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../../contexts/AdminContext";
 
+const STATUS_CFG = {
+  pending_verification: {
+    label: "Verifying",
+    badge: "bg-purple-50 text-purple-700 border border-purple-200",
+    dot: "bg-purple-500",
+  },
+  pending: {
+    label: "Pending",
+    badge: "bg-amber-50 text-amber-700 border border-amber-200",
+    dot: "bg-amber-400",
+  },
+  processing: {
+    label: "Processing",
+    badge: "bg-blue-50 text-blue-700 border border-blue-200",
+    dot: "bg-blue-500",
+  },
+  completed: {
+    label: "Completed",
+    badge: "bg-[#e8f0eb] text-[var(--primary)] border border-[#c0d4c7]",
+    dot: "bg-[var(--primary)]",
+  },
+  cancelled: {
+    label: "Cancelled",
+    badge: "bg-red-50 text-red-600 border border-red-200",
+    dot: "bg-red-400",
+  },
+};
+
+function StatCard({ label, value, icon, iconBg, onClick, urgent }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`group bg-white rounded-2xl border p-4 text-left transition-all duration-200
+        hover:-translate-y-0.5 hover:shadow-md
+        ${
+          urgent && value > 0
+            ? "border-[var(--secondary)] shadow-[0_0_0_1px_var(--secondary)]"
+            : "border-[var(--border)] hover:border-[var(--primary)]"
+        }`}
+    >
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <div
+          className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center shrink-0
+          group-hover:scale-110 transition-transform`}
+        >
+          <i className={`fas ${icon} text-white text-sm`} />
+        </div>
+        {urgent && value > 0 && (
+          <span className="w-2 h-2 bg-[var(--secondary)] rounded-full shrink-0 mt-1 animate-pulse" />
+        )}
+      </div>
+      <p className="text-3xl font-extrabold text-[var(--text)] leading-none mb-1">
+        {value}
+      </p>
+      <p className="text-xs text-[var(--text-muted)] font-medium leading-tight">
+        {label}
+      </p>
+    </button>
+  );
+}
+
+function OrderRow({ order, onClick }) {
+  const cfg = STATUS_CFG[order.status] || STATUS_CFG.pending;
+  const date = order.created_at
+    ? new Date(order.created_at).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "short",
+      })
+    : null;
+  return (
+    <div
+      onClick={onClick}
+      className="flex items-center gap-3 px-4 py-3 hover:bg-[var(--background)] rounded-xl
+        cursor-pointer transition-colors group"
+    >
+      <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-[var(--text)] truncate group-hover:text-[var(--primary)] transition-colors">
+          {order.service?.name || "Unknown service"}
+        </p>
+        <p className="text-xs text-[var(--text-muted)] font-mono">
+          {order.order_id}
+        </p>
+      </div>
+      <div className="flex items-center gap-2 shrink-0">
+        {date && (
+          <span className="text-xs text-[var(--text-muted)] hidden sm:block">
+            {date}
+          </span>
+        )}
+        <span
+          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${cfg.badge}`}
+        >
+          {cfg.label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function SectionCard({ title, icon, count, onViewAll, children, emptyText }) {
+  return (
+    <div className="bg-white rounded-2xl border border-[var(--border)] overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 bg-[var(--primary)] rounded-lg flex items-center justify-center">
+            <i className={`fas ${icon} text-[var(--secondary)] text-[10px]`} />
+          </div>
+          <h3 className="font-bold text-[var(--text)] text-sm">{title}</h3>
+          {count != null && (
+            <span className="text-xs font-bold px-2 py-0.5 bg-[var(--background)] border border-[var(--border)] rounded-full text-[var(--text-muted)]">
+              {count}
+            </span>
+          )}
+        </div>
+        <button
+          onClick={onViewAll}
+          className="text-xs font-bold text-[var(--primary)] hover:text-[var(--primary-hover)]
+            flex items-center gap-1 transition-colors"
+        >
+          View all <i className="fas fa-arrow-right text-[9px]" />
+        </button>
+      </div>
+      <div className="p-2">
+        {children || (
+          <p className="text-[var(--text-muted)] text-sm px-3 py-4">
+            {emptyText}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function DashboardHome() {
   const navigate = useNavigate();
   const { services, testimonials, contactMessages, orderSummary } = useAdmin();
 
   const totalServices = Object.values(services).reduce(
-    (sum, arr) => sum + arr.length,
+    (s, a) => s + a.length,
     0,
   );
   const pendingTestimonials = testimonials.filter((t) => !t.approved).length;
   const unreadMessages = contactMessages.filter((m) => !m.read).length;
-
   const { counts, recent } = orderSummary;
 
-  // Navigate to orders with a pre-selected status tab via router state
   const goToOrders = (status) =>
     navigate("/admin/orders", status ? { state: { status } } : undefined);
 
-  const stats = [
-    {
-      label: "Total Services",
-      value: totalServices,
-      icon: "fa-briefcase",
-      color: "bg-blue-500",
-      onClick: () => navigate("/admin/services"),
-    },
-    {
-      label: "Pending Testimonials",
-      value: pendingTestimonials,
-      icon: "fa-star",
-      color: "bg-yellow-500",
-      onClick: () => navigate("/admin/testimonials"),
-    },
-    {
-      label: "Unread Messages",
-      value: unreadMessages,
-      icon: "fa-envelope",
-      color: "bg-red-500",
-      onClick: () => navigate("/admin/messages"),
-    },
+  /* ── stat cards config ── */
+  const STATS = [
+    /* row 1: urgent operational */
     {
       label: "Needs Verification",
       value: counts.pending_verification,
       icon: "fa-file-invoice",
-      color: "bg-purple-500",
+      iconBg: "bg-purple-500",
       onClick: () => goToOrders("pending_verification"),
+      urgent: true,
     },
     {
       label: "Pending Orders",
       value: counts.pending,
       icon: "fa-hourglass-half",
-      color: "bg-orange-500",
+      iconBg: "bg-amber-500",
       onClick: () => goToOrders("pending"),
+      urgent: true,
     },
     {
-      label: "Processing Orders",
+      label: "Unread Messages",
+      value: unreadMessages,
+      icon: "fa-envelope",
+      iconBg: "bg-red-500",
+      onClick: () => navigate("/admin/messages"),
+      urgent: true,
+    },
+    {
+      label: "Pending Reviews",
+      value: pendingTestimonials,
+      icon: "fa-star",
+      iconBg: "bg-yellow-500",
+      onClick: () => navigate("/admin/testimonials"),
+      urgent: true,
+    },
+    /* row 2: informational */
+    {
+      label: "Processing",
       value: counts.processing,
-      icon: "fa-spinner",
-      color: "bg-blue-400",
+      icon: "fa-gears",
+      iconBg: "bg-blue-500",
       onClick: () => goToOrders("processing"),
     },
     {
-      label: "Completed Orders",
+      label: "Completed",
       value: counts.completed,
       icon: "fa-circle-check",
-      color: "bg-green-500",
+      iconBg: "bg-[var(--primary)]",
       onClick: () => goToOrders("completed"),
     },
     {
-      label: "Cancelled Orders",
+      label: "Cancelled",
       value: counts.cancelled,
       icon: "fa-circle-xmark",
-      color: "bg-red-400",
+      iconBg: "bg-red-400",
       onClick: () => goToOrders("cancelled"),
     },
     {
       label: "Total Orders",
       value: counts.total,
-      icon: "fa-shopping-cart",
-      color: "bg-indigo-500",
+      icon: "fa-bag-shopping",
+      iconBg: "bg-[var(--text-muted)]",
       onClick: () => goToOrders(null),
+    },
+    {
+      label: "Total Services",
+      value: totalServices,
+      icon: "fa-layer-group",
+      iconBg: "bg-[var(--secondary)]",
+      onClick: () => navigate("/admin/services"),
     },
   ];
 
-  const statusConfig = {
-    pending_verification: {
-      label: "Needs Verification",
-      badge: "bg-purple-100 text-purple-800",
-    },
-    pending: { label: "Pending", badge: "bg-orange-100 text-orange-800" },
-    processing: { label: "Processing", badge: "bg-blue-100 text-blue-800" },
-    completed: { label: "Completed", badge: "bg-green-100 text-green-800" },
-    cancelled: { label: "Cancelled", badge: "bg-red-100 text-red-800" },
-  };
-
-  const OrderList = ({ title, orderList, emptyText, status }) => (
-    <div className="bg-white rounded-2xl shadow-lg min-w-0 overflow-hidden">
-      <div
-        className="flex items-center justify-between px-4 md:px-6 pt-4 md:pt-6 pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
-        onClick={() => goToOrders(status)}
-      >
-        <h3 className="text-base font-bold text-gray-900">{title}</h3>
-        <span className="text-xs text-[#4169E1] font-medium flex items-center gap-1">
-          View all <i className="fas fa-arrow-right text-[10px]"></i>
-        </span>
+  return (
+    <div className="min-w-0 overflow-x-hidden space-y-6">
+      {/* Page heading */}
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-2xl font-extrabold text-[var(--text)] tracking-tight">
+            Overview
+          </h2>
+          <p className="text-sm text-[var(--text-muted)] mt-0.5">
+            {new Date().toLocaleDateString("en-GB", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
+          </p>
+        </div>
+        {/* Quick action */}
+        <button
+          onClick={() => navigate("/admin/orders")}
+          className="flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)]
+            text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:shadow-md"
+        >
+          <i className="fas fa-bag-shopping text-[var(--secondary)] text-xs" />
+          Manage Orders
+        </button>
       </div>
-      <div className="px-4 md:px-6 pb-4 md:pb-6">
-        {orderList.length === 0 ? (
-          <p className="text-gray-500 text-sm">{emptyText}</p>
-        ) : (
-          <div className="space-y-2">
-            {orderList.map((order) => (
+
+      {/* ── Stat grid ── */}
+      <div>
+        {/* Urgent row label */}
+        <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3 flex items-center gap-2">
+          <span className="w-1.5 h-1.5 bg-[var(--danger)] rounded-full animate-pulse inline-block" />
+          Requires Attention
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+          {STATS.slice(0, 4).map((s, i) => (
+            <StatCard key={i} {...s} />
+          ))}
+        </div>
+
+        <p className="text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest mb-3">
+          Summary
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+          {STATS.slice(4).map((s, i) => (
+            <StatCard key={i} {...s} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Orders sections ── */}
+      <div className="grid md:grid-cols-2 gap-4">
+        <SectionCard
+          title="Needs Verification"
+          icon="fa-file-invoice"
+          count={recent.pending_verification?.length}
+          onViewAll={() => goToOrders("pending_verification")}
+          emptyText="No orders awaiting verification"
+        >
+          {recent.pending_verification?.length > 0 &&
+            recent.pending_verification.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                onClick={() => goToOrders("pending_verification")}
+              />
+            ))}
+        </SectionCard>
+
+        <SectionCard
+          title="Pending Orders"
+          icon="fa-hourglass-half"
+          count={recent.pending?.length}
+          onViewAll={() => goToOrders("pending")}
+          emptyText="No pending orders"
+        >
+          {recent.pending?.length > 0 &&
+            recent.pending.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                onClick={() => goToOrders("pending")}
+              />
+            ))}
+        </SectionCard>
+
+        <SectionCard
+          title="Processing"
+          icon="fa-gears"
+          count={recent.processing?.length}
+          onViewAll={() => goToOrders("processing")}
+          emptyText="No orders in progress"
+        >
+          {recent.processing?.length > 0 &&
+            recent.processing.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                onClick={() => goToOrders("processing")}
+              />
+            ))}
+        </SectionCard>
+
+        <SectionCard
+          title="Recently Completed"
+          icon="fa-circle-check"
+          count={recent.completed?.length}
+          onViewAll={() => goToOrders("completed")}
+          emptyText="No completed orders yet"
+        >
+          {recent.completed?.length > 0 &&
+            recent.completed.map((o) => (
+              <OrderRow
+                key={o.id}
+                order={o}
+                onClick={() => goToOrders("completed")}
+              />
+            ))}
+        </SectionCard>
+      </div>
+
+      {/* ── Recent messages ── */}
+      <SectionCard
+        title="Recent Messages"
+        icon="fa-envelope"
+        count={contactMessages.length}
+        onViewAll={() => navigate("/admin/messages")}
+        emptyText="No messages yet"
+      >
+        {contactMessages.length > 0 && (
+          <div className="grid sm:grid-cols-2 gap-1">
+            {contactMessages.slice(0, 6).map((msg) => (
               <div
-                key={order.id}
-                onClick={() => goToOrders(status)}
-                className="flex items-center justify-between p-3 bg-gray-50 hover:bg-[#4169E1]/5 rounded-xl gap-2 cursor-pointer transition-colors"
+                key={msg.id}
+                onClick={() => navigate("/admin/messages")}
+                className="flex items-start gap-3 px-4 py-3 hover:bg-[var(--background)] rounded-xl
+                  cursor-pointer transition-colors group"
               >
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm text-gray-700 truncate font-medium">
-                    {order.service?.name || "Unknown service"}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {order.order_id}
+                <div className="w-8 h-8 bg-[var(--primary)] rounded-lg flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-[var(--secondary)] text-xs font-bold">
+                    {(msg.name || msg.fullName || "?").charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-[var(--text)] truncate group-hover:text-[var(--primary)] transition-colors">
+                      {msg.name || msg.fullName}
+                    </p>
+                    {!msg.read && (
+                      <span className="w-2 h-2 bg-[var(--danger)] rounded-full shrink-0" />
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] truncate">
+                    {msg.message}
                   </p>
                 </div>
-                <span
-                  className={`shrink-0 px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${statusConfig[order.status]?.badge || "bg-gray-100 text-gray-800"}`}
-                >
-                  {statusConfig[order.status]?.label || order.status}
-                </span>
               </div>
             ))}
           </div>
         )}
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-w-0 overflow-x-hidden">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">
-        Dashboard Overview
-      </h2>
-
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
-        {stats.map((stat, i) => (
-          <button
-            key={i}
-            onClick={stat.onClick}
-            className="bg-white p-3 md:p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md hover:border-[#4169E1]/30 hover:-translate-y-0.5 transition-all text-left min-w-0 group"
-          >
-            <div className="flex items-center gap-2 md:gap-3">
-              <div
-                className={`w-9 h-9 md:w-11 md:h-11 ${stat.color} rounded-xl flex items-center justify-center text-white text-sm md:text-lg shrink-0 group-hover:scale-110 transition-transform`}
-              >
-                <i className={`fas ${stat.icon}`}></i>
-              </div>
-              <div className="min-w-0">
-                <p className="text-gray-500 text-xs truncate leading-tight">
-                  {stat.label}
-                </p>
-                <p className="text-xl md:text-2xl font-bold text-gray-900">
-                  {stat.value}
-                </p>
-              </div>
-            </div>
-          </button>
-        ))}
-      </div>
-
-      {/* Needs Verification — full width, most urgent */}
-      <div className="mb-4">
-        <OrderList
-          title="Needs Verification"
-          orderList={recent.pending_verification ?? []}
-          emptyText="No orders awaiting verification"
-          status="pending_verification"
-        />
-      </div>
-
-      <div className="grid md:grid-cols-2 gap-4 mb-4">
-        <OrderList
-          title="Pending Orders"
-          orderList={recent.pending}
-          emptyText="No pending orders"
-          status="pending"
-        />
-        <OrderList
-          title="Processing Orders"
-          orderList={recent.processing}
-          emptyText="No orders currently processing"
-          status="processing"
-        />
-      </div>
-      <div className="grid md:grid-cols-2 gap-4 mb-4">
-        <OrderList
-          title="Completed Orders"
-          orderList={recent.completed}
-          emptyText="No completed orders yet"
-          status="completed"
-        />
-        <OrderList
-          title="Cancelled Orders"
-          orderList={recent.cancelled}
-          emptyText="No cancelled orders"
-          status="cancelled"
-        />
-      </div>
-
-      {/* Recent Messages */}
-      <div className="bg-white rounded-2xl shadow-lg overflow-hidden min-w-0">
-        <div
-          className="flex items-center justify-between px-4 md:px-6 pt-4 md:pt-6 pb-3 cursor-pointer hover:bg-gray-50 transition-colors"
-          onClick={() => navigate("/admin/messages")}
-        >
-          <h3 className="text-base font-bold text-gray-900">Recent Messages</h3>
-          <span className="text-xs text-[#4169E1] font-medium flex items-center gap-1">
-            View all <i className="fas fa-arrow-right text-[10px]"></i>
-          </span>
-        </div>
-        <div className="px-4 md:px-6 pb-4 md:pb-6">
-          {contactMessages.length === 0 ? (
-            <p className="text-gray-500 text-sm">No messages yet</p>
-          ) : (
-            <div className="grid md:grid-cols-2 gap-2">
-              {contactMessages.slice(0, 6).map((msg) => (
-                <div
-                  key={msg.id}
-                  onClick={() => navigate("/admin/messages")}
-                  className="flex items-center justify-between p-3 bg-gray-50 hover:bg-[#4169E1]/5 rounded-xl gap-2 cursor-pointer transition-colors"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 truncate text-sm">
-                      {msg.name || msg.fullName}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      {msg.message}
-                    </p>
-                  </div>
-                  {!msg.read && (
-                    <div className="w-2.5 h-2.5 bg-red-500 rounded-full shrink-0"></div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      </SectionCard>
     </div>
   );
 }
