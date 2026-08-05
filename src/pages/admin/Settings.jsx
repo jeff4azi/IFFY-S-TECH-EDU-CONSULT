@@ -194,7 +194,7 @@ export default function SiteSettings() {
               </div>
             </Field>
             <Field
-              label="WhatsApp Group / Channel Link"
+              label="WhatsApp Group"
               icon="fa-link"
               hint="This link appears in the 'Stay Updated' section on the homepage."
             >
