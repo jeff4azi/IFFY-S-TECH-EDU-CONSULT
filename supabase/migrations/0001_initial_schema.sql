@@ -1,6 +1,6 @@
 -- ============================================
 -- 0001_initial_schema.sql
--- Consolidated migration for Ace Educational Consult
+-- Consolidated migration for IFFY'S TECH EDU CONSULT
 -- ============================================
 
 -- Enable UUID extension
@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS contact_messages (
 -- ============================================
 CREATE TABLE IF NOT EXISTS orders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    order_id VARCHAR(100) NOT NULL UNIQUE, -- ACE-<timestamp>-<random>
+    order_id VARCHAR(100) NOT NULL UNIQUE, -- ITC-<timestamp>-<random>
     service_id UUID NOT NULL REFERENCES services(id) ON DELETE CASCADE,
     user_data JSONB NOT NULL,
     status order_status DEFAULT 'pending',
@@ -250,7 +250,7 @@ VALUES (
     '2348000000000',
     '',
     '{"facebook": "#", "twitter": "#", "instagram": "#", "linkedin": "#"}'::jsonb,
-    '{"bankName": "Zenith Bank", "accountNumber": "1234567890", "accountName": "Ace Educational Consult"}'::jsonb
+    '{"bankName": "Zenith Bank", "accountNumber": "1234567890", "accountName": "IFFY'\''S TECH EDU CONSULT"}'::jsonb
 )
 ON CONFLICT DO NOTHING;
 

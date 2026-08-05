@@ -4,8 +4,8 @@ import { useAdmin } from "../contexts/AdminContext";
 import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 import { uploadOrderFile } from "../lib/imageUpload";
 
-const PENDING_ORDER_KEY = "ace_pending_order";
-const ORDER_IDS_KEY = "ace_order_ids";
+const PENDING_ORDER_KEY = "itc_pending_order";
+const ORDER_IDS_KEY = "itc_order_ids";
 
 function generateOrderId() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -14,7 +14,7 @@ function generateOrderId() {
       { length: n },
       () => chars[Math.floor(Math.random() * chars.length)],
     ).join("");
-  return `ACE-${rand(6)}-${rand(6)}`;
+  return `ITC-${rand(6)}-${rand(6)}`;
 }
 
 /* ── Step indicator ── */

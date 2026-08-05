@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAdmin } from "../contexts/AdminContext";
 import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 
-const PENDING_ORDER_KEY = "ace_pending_order";
+const PENDING_ORDER_KEY = "itc_pending_order";
 
 /* ─── tiny animated counter ─── */
 function Counter({ end, suffix }) {

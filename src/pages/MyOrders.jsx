@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabase";
 import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 
-const LS_KEY = "ace_order_ids";
-const PENDING_ORDER_KEY = "ace_pending_order";
+const LS_KEY = "itc_order_ids";
+const PENDING_ORDER_KEY = "itc_pending_order";
 
 /* ─── status config uses CSS variables via Tailwind arbitrary values ─── */
 const STATUS_CONFIG = {
@@ -613,7 +613,7 @@ export default function MyOrders() {
           <form onSubmit={handleManualLookup} className="flex gap-2">
             <input
               type="text"
-              placeholder="e.g. ACE-LK3F9A-7X2M1P"
+              placeholder="e.g. ITC-LK3F9A-7X2M1P"
               value={manualId}
               onChange={(e) => {
                 setManualId(e.target.value);

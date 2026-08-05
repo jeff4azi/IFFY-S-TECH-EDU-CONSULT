@@ -4,7 +4,7 @@ import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 import { uploadOrderFile } from "../lib/imageUpload";
 import { useAdmin } from "../contexts/AdminContext";
 
-const PENDING_ORDER_KEY = "ace_pending_order";
+const PENDING_ORDER_KEY = "itc_pending_order";
 
 /* ── Field type icon map ── */
 const FIELD_ICONS = {
