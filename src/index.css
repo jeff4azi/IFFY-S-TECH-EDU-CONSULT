@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+html, body {
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --primary: #1A4328;
+  --primary-hover: #14341F;
+
+  --secondary: #C49F34;
+  --secondary-hover: #B39A4F;
+
+  --accent: #C9B87C;
+
+  --background: #F5F6F1;
+  --surface: #FFFFFF;
+
+  --text: #1F2937;
+  --text-muted: #5F6B66;
+
+  --border: #D9DDD4;
+
+  --success: #1A4328;
+  --warning: #C49F34;
+  --danger: #C84B31;
+  --info: #9EB1A2;
+}
+
+body {
+  font-family: 'Manrope', sans-serif;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-whatsapp {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
+  }
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+}
+
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+.pulse-whatsapp {
+  animation: pulse-whatsapp 2s infinite;
+}
