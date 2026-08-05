@@ -2992,7 +2992,7 @@ export default function HomePage() {
         aria-label="Track my orders"
         style={{
           position: "fixed",
-          bottom: 112,
+          bottom: 100,
           right: 24,
           zIndex: 50,
           background: "var(--primary)",
