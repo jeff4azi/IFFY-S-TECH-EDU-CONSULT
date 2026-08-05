@@ -515,226 +515,246 @@ export default function HomePage() {
           minHeight: "100vh",
           display: "flex",
           alignItems: "center",
+          justifyContent: "center",
           overflow: "hidden",
         }}
       >
-        {/* Background image + overlay */}
+        {/* Background image */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 0,
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=1800&q=80')",
+              "url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1800&q=80')",
             backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundPosition: "center top",
           }}
         />
+        {/* Multi-layer overlay — dark at bottom, lighter in center for readability */}
         <div
           style={{
             position: "absolute",
             inset: 0,
             zIndex: 1,
             background:
-              "linear-gradient(135deg, rgba(26,67,40,0.92) 0%, rgba(26,67,40,0.75) 50%, rgba(20,52,31,0.85) 100%)",
+              "linear-gradient(to bottom, rgba(10,28,18,0.55) 0%, rgba(10,28,18,0.72) 50%, rgba(10,28,18,0.88) 100%)",
           }}
         />
-        {/* decorative circles */}
+        {/* Subtle radial glow in the center */}
         <div
           style={{
             position: "absolute",
-            top: -80,
-            right: -80,
-            width: 420,
-            height: 420,
-            borderRadius: "50%",
-            border: "2px solid rgba(196,159,52,0.15)",
+            inset: 0,
             zIndex: 1,
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            top: 60,
-            right: 40,
-            width: 240,
-            height: 240,
-            borderRadius: "50%",
-            border: "2px solid rgba(196,159,52,0.08)",
-            zIndex: 1,
+            background:
+              "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(196,159,52,0.08) 0%, transparent 70%)",
           }}
         />
 
+        {/* ── Centered hero content ── */}
         <div
           style={{
             position: "relative",
             zIndex: 2,
-            maxWidth: 1280,
-            margin: "0 auto",
-            padding: "120px 1.5rem 80px",
             width: "100%",
+            maxWidth: 860,
+            margin: "0 auto",
+            padding: "140px 1.5rem 100px",
+            textAlign: "center",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
           }}
         >
-          <div style={{ maxWidth: 680 }}>
-            {/* eyebrow */}
-            <div
+          {/* Eyebrow pill */}
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              background: "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.25)",
+              backdropFilter: "blur(8px)",
+              borderRadius: 50,
+              padding: "7px 18px",
+              marginBottom: "1.75rem",
+            }}
+          >
+            <i
+              className="fas fa-microchip"
+              style={{ color: "var(--secondary)", fontSize: "0.8rem" }}
+            ></i>
+            <span
               style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 8,
-                background: "rgba(196,159,52,0.15)",
-                border: "1px solid rgba(196,159,52,0.35)",
+                color: "rgba(255,255,255,0.9)",
+                fontSize: "0.8rem",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+              }}
+            >
+              Technology &amp; Education Consulting
+            </span>
+          </div>
+
+          {/* Headline */}
+          <h1
+            style={{
+              fontSize: "clamp(2.4rem,7vw,5rem)",
+              fontWeight: 900,
+              color: "#fff",
+              lineHeight: 1.1,
+              marginBottom: "1.5rem",
+              letterSpacing: "-0.03em",
+              maxWidth: 780,
+            }}
+          >
+            Empowering Your Future Through{" "}
+            <span style={{ color: "var(--secondary)" }}>
+              Tech &amp; Education
+            </span>
+          </h1>
+
+          {/* Sub-headline */}
+          <p
+            style={{
+              fontSize: "clamp(1rem,2.5vw,1.2rem)",
+              color: "rgba(255,255,255,0.75)",
+              lineHeight: 1.75,
+              marginBottom: "2.5rem",
+              maxWidth: 580,
+            }}
+          >
+            From admissions processing and digital certifications to utility
+            payments and document verification — fast, secure, and handled by
+            experts.
+          </p>
+
+          {/* CTA buttons */}
+          <div
+            className="hero-cta-row"
+            style={{
+              display: "flex",
+              gap: "1rem",
+              justifyContent: "center",
+              flexWrap: "wrap",
+            }}
+          >
+            <button
+              onClick={() => scrollTo("services")}
+              style={{
+                background: "#fff",
+                color: "var(--primary)",
+                border: "none",
                 borderRadius: 50,
-                padding: "6px 16px",
-                marginBottom: "1.5rem",
-              }}
-            >
-              <i
-                className="fas fa-microchip"
-                style={{ color: "var(--secondary)", fontSize: "0.85rem" }}
-              ></i>
-              <span
-                style={{
-                  color: "var(--secondary)",
-                  fontSize: "0.82rem",
-                  fontWeight: 700,
-                  letterSpacing: "0.08em",
-                  textTransform: "uppercase",
-                }}
-              >
-                Technology &amp; Education Consulting
-              </span>
-            </div>
-
-            <h1
-              style={{
-                fontSize: "clamp(2.2rem,6vw,4rem)",
+                padding: "15px 36px",
                 fontWeight: 800,
-                color: "#fff",
-                lineHeight: 1.15,
-                marginBottom: "1.5rem",
-                letterSpacing: "-0.02em",
-              }}
-            >
-              Empowering Your Future Through{" "}
-              <span style={{ color: "var(--secondary)" }}>
-                Tech &amp; Education
-              </span>
-            </h1>
-
-            <p
-              style={{
-                fontSize: "1.15rem",
-                color: "rgba(255,255,255,0.80)",
-                lineHeight: 1.75,
-                marginBottom: "2.5rem",
-                maxWidth: 540,
-              }}
-            >
-              From admissions processing and digital certifications to utility
-              payments and document verification — IFFY'S TECH EDU CONSULT
-              handles it all with speed, security, and expertise.
-            </p>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
-              <button
-                onClick={() => scrollTo("services")}
-                style={{
-                  background: "var(--secondary)",
-                  color: "#fff",
-                  border: "none",
-                  borderRadius: 50,
-                  padding: "14px 32px",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                  boxShadow: "0 8px 24px rgba(196,159,52,0.45)",
-                  transition: "all 0.25s",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 10,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "translateY(-3px)";
-                  e.currentTarget.style.boxShadow =
-                    "0 12px 32px rgba(196,159,52,0.55)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "none";
-                  e.currentTarget.style.boxShadow =
-                    "0 8px 24px rgba(196,159,52,0.45)";
-                }}
-              >
-                <i className="fas fa-rocket"></i> Explore Our Services
-              </button>
-              <button
-                onClick={() => scrollTo("contact")}
-                style={{
-                  background: "transparent",
-                  color: "#fff",
-                  border: "2px solid rgba(255,255,255,0.5)",
-                  borderRadius: 50,
-                  padding: "14px 32px",
-                  fontWeight: 700,
-                  fontSize: "1rem",
-                  cursor: "pointer",
-                  transition: "all 0.25s",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.borderColor = "#fff";
-                  e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.5)";
-                  e.currentTarget.style.background = "transparent";
-                }}
-              >
-                Get in Touch
-              </button>
-            </div>
-
-            {/* trust badges */}
-            <div
-              style={{
+                fontSize: "1rem",
+                cursor: "pointer",
+                transition: "all 0.25s",
                 display: "flex",
-                flexWrap: "wrap",
-                gap: "1.5rem",
-                marginTop: "3rem",
+                alignItems: "center",
+                gap: 10,
+                boxShadow: "0 8px 30px rgba(0,0,0,0.25)",
+                minWidth: 200,
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-3px)";
+                e.currentTarget.style.boxShadow =
+                  "0 14px 40px rgba(0,0,0,0.35)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "none";
+                e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.25)";
               }}
             >
-              {[
-                { icon: "fa-shield-halved", text: "Secure & Verified" },
-                { icon: "fa-bolt", text: "Fast Delivery" },
-                { icon: "fa-headset", text: "24/7 Support" },
-              ].map((b) => (
-                <div
-                  key={b.text}
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
-                >
-                  <i
-                    className={`fas ${b.icon}`}
-                    style={{ color: "var(--secondary)", fontSize: "1rem" }}
-                  ></i>
+              Get started now <i className="fas fa-arrow-right"></i>
+            </button>
+            <button
+              onClick={() => scrollTo("contact")}
+              style={{
+                background: "rgba(10,28,18,0.75)",
+                color: "#fff",
+                border: "1.5px solid rgba(255,255,255,0.25)",
+                backdropFilter: "blur(8px)",
+                borderRadius: 50,
+                padding: "15px 36px",
+                fontWeight: 700,
+                fontSize: "1rem",
+                cursor: "pointer",
+                transition: "all 0.25s",
+                minWidth: 200,
+                justifyContent: "center",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.6)";
+                e.currentTarget.style.background = "rgba(10,28,18,0.9)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = "rgba(255,255,255,0.25)";
+                e.currentTarget.style.background = "rgba(10,28,18,0.75)";
+              }}
+            >
+              Consult an expert
+            </button>
+          </div>
+
+          {/* Trust badges row */}
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "1.5rem",
+              marginTop: "3.5rem",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            {[
+              { icon: "fa-shield-halved", text: "Secure & Verified" },
+              { icon: "fa-bolt-lightning", text: "Fast Delivery" },
+              { icon: "fa-headset", text: "24/7 Support" },
+            ].map((b, i) => (
+              <div
+                key={b.text}
+                style={{ display: "flex", alignItems: "center", gap: 8 }}
+              >
+                {i > 0 && (
                   <span
                     style={{
-                      color: "rgba(255,255,255,0.75)",
-                      fontSize: "0.9rem",
-                      fontWeight: 500,
+                      width: 4,
+                      height: 4,
+                      borderRadius: "50%",
+                      background: "rgba(255,255,255,0.3)",
+                      marginRight: 8,
                     }}
-                  >
-                    {b.text}
-                  </span>
-                </div>
-              ))}
-            </div>
+                  />
+                )}
+                <i
+                  className={`fas ${b.icon}`}
+                  style={{ color: "var(--secondary)", fontSize: "0.95rem" }}
+                ></i>
+                <span
+                  style={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: "0.88rem",
+                    fontWeight: 500,
+                  }}
+                >
+                  {b.text}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* scroll cue */}
+        {/* Scroll cue */}
         <div
           style={{
             position: "absolute",
-            bottom: 32,
+            bottom: 28,
             left: "50%",
             transform: "translateX(-50%)",
             zIndex: 2,
@@ -746,9 +766,9 @@ export default function HomePage() {
         >
           <span
             style={{
-              color: "rgba(255,255,255,0.5)",
-              fontSize: "0.75rem",
-              letterSpacing: "0.1em",
+              color: "rgba(255,255,255,0.4)",
+              fontSize: "0.7rem",
+              letterSpacing: "0.15em",
               textTransform: "uppercase",
             }}
           >

@@ -103,6 +103,16 @@ h6 {
   .show-mobile {
     display: flex !important;
   }
+
+  /* Hero CTA buttons stack full-width on mobile */
+  .hero-cta-row {
+    flex-direction: column !important;
+    width: 100%;
+  }
+  .hero-cta-row button {
+    width: 100% !important;
+    min-width: unset !important;
+  }
 }
 
 @media (min-width: 769px) {
