@@ -1402,8 +1402,9 @@ export default function HomePage() {
         id="how-it-works"
         style={{ padding: "6rem 1.5rem", background: "var(--background)" }}
       >
-        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
-          <div style={{ textAlign: "center", marginBottom: "3.5rem" }}>
+        <div style={{ maxWidth: 1000, margin: "0 auto" }}>
+          {/* Heading */}
+          <div style={{ textAlign: "center", marginBottom: "4rem" }}>
             <div
               style={{
                 display: "inline-flex",
@@ -1447,7 +1448,7 @@ export default function HomePage() {
               style={{
                 color: "var(--text-muted)",
                 fontSize: "1.05rem",
-                maxWidth: 500,
+                maxWidth: 460,
                 margin: "0 auto",
               }}
             >
@@ -1455,122 +1456,187 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* Cards — fixed equal heights, centered grid */}
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(260px,1fr))",
-              gap: "2rem",
+              gridTemplateColumns: "repeat(3, 1fr)",
+              gap: "1.5rem",
+              alignItems: "stretch",
             }}
+            className="how-it-works-grid"
           >
             {[
               {
                 step: "01",
                 icon: "fa-magnifying-glass",
+                color: "var(--primary)",
                 title: "Choose a Service",
-                desc: "Browse our catalogue and pick the service that matches your needs.",
+                desc: "Browse our full catalogue and pick exactly the service that matches your need.",
+                badge: "Step 1",
               },
               {
                 step: "02",
                 icon: "fa-file-signature",
+                color: "var(--secondary)",
                 title: "Submit Your Details",
-                desc: "Fill in the request form. It takes less than 3 minutes.",
+                desc: "Fill out the short request form with your information. Takes under 3 minutes.",
+                badge: "Step 2",
               },
               {
                 step: "03",
                 icon: "fa-circle-check",
+                color: "var(--primary)",
                 title: "Receive Your Result",
-                desc: "We process your request and deliver securely — fast.",
+                desc: "We process your request and deliver it to you securely and swiftly.",
+                badge: "Step 3",
               },
             ].map((item, i) => (
-              <div key={i} style={{ position: "relative" }}>
-                {/* connector line (desktop) */}
-                {i < 2 && (
-                  <div
-                    style={{
-                      position: "absolute",
-                      top: 32,
-                      left: "calc(100% - 1rem)",
-                      width: "2rem",
-                      height: 2,
-                      background: "var(--border)",
-                      zIndex: 0,
-                      display: "none",
-                    }}
-                    className="step-connector"
-                  />
-                )}
+              <div
+                key={i}
+                style={{
+                  background: "var(--surface)",
+                  borderRadius: 20,
+                  border: "1.5px solid var(--border)",
+                  padding: "2.25rem 2rem",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-start",
+                  transition: "all 0.3s",
+                  position: "relative",
+                  overflow: "hidden",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = item.color;
+                  e.currentTarget.style.transform = "translateY(-6px)";
+                  e.currentTarget.style.boxShadow =
+                    i === 1
+                      ? "0 16px 48px rgba(196,159,52,0.18)"
+                      : "0 16px 48px rgba(26,67,40,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = "var(--border)";
+                  e.currentTarget.style.transform = "none";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {/* Large watermark step number */}
+                <span
+                  style={{
+                    position: "absolute",
+                    top: -10,
+                    right: 16,
+                    fontSize: "6rem",
+                    fontWeight: 900,
+                    lineHeight: 1,
+                    color:
+                      i === 1 ? "rgba(196,159,52,0.07)" : "rgba(26,67,40,0.05)",
+                    userSelect: "none",
+                    pointerEvents: "none",
+                    letterSpacing: "-0.04em",
+                  }}
+                >
+                  {item.step}
+                </span>
+
+                {/* Step badge */}
                 <div
                   style={{
-                    background: "var(--surface)",
-                    borderRadius: 20,
-                    padding: "2.5rem 2rem",
-                    border: "1px solid var(--border)",
-                    position: "relative",
-                    zIndex: 1,
-                    transition: "all 0.3s",
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.borderColor = "var(--primary)";
-                    e.currentTarget.style.transform = "translateY(-4px)";
-                    e.currentTarget.style.boxShadow =
-                      "0 12px 40px rgba(26,67,40,0.08)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.borderColor = "var(--border)";
-                    e.currentTarget.style.transform = "none";
-                    e.currentTarget.style.boxShadow = "none";
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    background:
+                      i === 1 ? "rgba(196,159,52,0.12)" : "rgba(26,67,40,0.07)",
+                    border: `1px solid ${i === 1 ? "rgba(196,159,52,0.25)" : "rgba(26,67,40,0.12)"}`,
+                    borderRadius: 50,
+                    padding: "4px 12px",
+                    marginBottom: "1.25rem",
                   }}
                 >
                   <span
                     style={{
-                      fontSize: "3rem",
-                      fontWeight: 900,
-                      color: "rgba(26,67,40,0.06)",
-                      lineHeight: 1,
-                      display: "block",
-                      marginBottom: "0.5rem",
+                      width: 6,
+                      height: 6,
+                      borderRadius: "50%",
+                      background: item.color,
+                      flexShrink: 0,
                     }}
-                  >
-                    {item.step}
-                  </span>
-                  <div
+                  />
+                  <span
                     style={{
-                      width: 52,
-                      height: 52,
-                      borderRadius: 14,
-                      background: "var(--primary)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      marginBottom: "1.25rem",
-                    }}
-                  >
-                    <i
-                      className={`fas ${item.icon}`}
-                      style={{ color: "var(--secondary)", fontSize: "1.3rem" }}
-                    ></i>
-                  </div>
-                  <h3
-                    style={{
+                      fontSize: "0.72rem",
                       fontWeight: 700,
-                      color: "var(--text)",
-                      fontSize: "1.1rem",
-                      marginBottom: "0.5rem",
+                      color: item.color,
+                      letterSpacing: "0.08em",
+                      textTransform: "uppercase",
                     }}
                   >
-                    {item.title}
-                  </h3>
-                  <p
-                    style={{
-                      color: "var(--text-muted)",
-                      fontSize: "0.92rem",
-                      lineHeight: 1.65,
-                      margin: 0,
-                    }}
-                  >
-                    {item.desc}
-                  </p>
+                    {item.badge}
+                  </span>
                 </div>
+
+                {/* Icon */}
+                <div
+                  style={{
+                    width: 58,
+                    height: 58,
+                    borderRadius: 16,
+                    background: item.color,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: "1.5rem",
+                    flexShrink: 0,
+                    boxShadow:
+                      i === 1
+                        ? "0 8px 24px rgba(196,159,52,0.35)"
+                        : "0 8px 24px rgba(26,67,40,0.22)",
+                  }}
+                >
+                  <i
+                    className={`fas ${item.icon}`}
+                    style={{
+                      color: i === 1 ? "#fff" : "var(--secondary)",
+                      fontSize: "1.4rem",
+                    }}
+                  ></i>
+                </div>
+
+                {/* Text */}
+                <h3
+                  style={{
+                    fontWeight: 800,
+                    color: "var(--text)",
+                    fontSize: "1.1rem",
+                    marginBottom: "0.65rem",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {item.title}
+                </h3>
+                <p
+                  style={{
+                    color: "var(--text-muted)",
+                    fontSize: "0.92rem",
+                    lineHeight: 1.7,
+                    margin: 0,
+                    flex: 1,
+                  }}
+                >
+                  {item.desc}
+                </p>
+
+                {/* Bottom accent line */}
+                <div
+                  style={{
+                    marginTop: "1.75rem",
+                    height: 3,
+                    width: "2.5rem",
+                    borderRadius: 99,
+                    background: item.color,
+                    opacity: 0.5,
+                  }}
+                />
               </div>
             ))}
           </div>

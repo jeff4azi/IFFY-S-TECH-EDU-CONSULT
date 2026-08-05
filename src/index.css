@@ -113,6 +113,11 @@ h6 {
     width: 100% !important;
     min-width: unset !important;
   }
+
+  /* How it works: single column on mobile */
+  .how-it-works-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
 
 @media (min-width: 769px) {
