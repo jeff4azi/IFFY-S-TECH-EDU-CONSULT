@@ -175,17 +175,18 @@ export default function SiteSettings() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Twitter
+                WhatsApp Channel Link
               </label>
               <input
                 type="url"
-                value={formData.socialLinks.twitter}
+                placeholder="https://whatsapp.com/channel/..."
+                value={formData.socialLinks.whatsappChannel || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
                     socialLinks: {
                       ...prev.socialLinks,
-                      twitter: e.target.value,
+                      whatsappChannel: e.target.value,
                     },
                   }))
                 }
@@ -213,17 +214,18 @@ export default function SiteSettings() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                LinkedIn
+                TikTok
               </label>
               <input
                 type="url"
-                value={formData.socialLinks.linkedin}
+                placeholder="https://tiktok.com/@..."
+                value={formData.socialLinks.tiktok || ""}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev,
                     socialLinks: {
                       ...prev.socialLinks,
-                      linkedin: e.target.value,
+                      tiktok: e.target.value,
                     },
                   }))
                 }

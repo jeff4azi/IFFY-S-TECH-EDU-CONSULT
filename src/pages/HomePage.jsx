@@ -222,7 +222,12 @@ export default function HomePage() {
     businessHours: "",
     whatsappNumber: "",
     whatsappGroupLink: "",
-    socialLinks: { facebook: "#", twitter: "#", instagram: "#", linkedin: "#" },
+    socialLinks: {
+      facebook: "#",
+      whatsappChannel: "#",
+      instagram: "#",
+      tiktok: "#",
+    },
     paymentDetails: { bankName: "", accountNumber: "", accountName: "" },
   };
   const settings = siteSettings || defaultSettings;
@@ -2485,9 +2490,9 @@ export default function HomePage() {
                     label: "Facebook",
                   },
                   {
-                    icon: "fa-x-twitter",
-                    href: settings.socialLinks?.twitter,
-                    label: "Twitter / X",
+                    icon: "fa-whatsapp",
+                    href: settings.socialLinks?.whatsappChannel,
+                    label: "WhatsApp Channel",
                   },
                   {
                     icon: "fa-instagram",
@@ -2495,9 +2500,9 @@ export default function HomePage() {
                     label: "Instagram",
                   },
                   {
-                    icon: "fa-linkedin-in",
-                    href: settings.socialLinks?.linkedin,
-                    label: "LinkedIn",
+                    icon: "fa-tiktok",
+                    href: settings.socialLinks?.tiktok,
+                    label: "TikTok",
                   },
                 ].map((s) => (
                   <a
@@ -2753,14 +2758,17 @@ export default function HomePage() {
                     icon: "fa-facebook-f",
                     href: settings.socialLinks?.facebook,
                   },
-                  { icon: "fa-x-twitter", href: settings.socialLinks?.twitter },
+                  {
+                    icon: "fa-whatsapp",
+                    href: settings.socialLinks?.whatsappChannel,
+                  },
                   {
                     icon: "fa-instagram",
                     href: settings.socialLinks?.instagram,
                   },
                   {
-                    icon: "fa-linkedin-in",
-                    href: settings.socialLinks?.linkedin,
+                    icon: "fa-tiktok",
+                    href: settings.socialLinks?.tiktok,
                   },
                 ].map((s) => (
                   <a
