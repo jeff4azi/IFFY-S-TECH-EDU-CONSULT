@@ -2272,7 +2272,7 @@ export default function HomePage() {
               }}
             >
               <i className="fab fa-whatsapp" style={{ fontSize: "1.3rem" }}></i>{" "}
-              Join Our WhatsApp Group
+              Join Our WhatsApp Community
             </a>
           ) : (
             <span
@@ -2291,7 +2291,7 @@ export default function HomePage() {
               }}
             >
               <i className="fab fa-whatsapp" style={{ fontSize: "1.3rem" }}></i>{" "}
-              Join Our WhatsApp Group
+              Join Our WhatsApp Community
             </span>
           )}
         </div>
