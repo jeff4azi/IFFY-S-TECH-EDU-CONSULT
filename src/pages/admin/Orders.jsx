@@ -10,35 +10,60 @@ const PAGE_SIZE = 20;
 const STATUS_TABS = [
   {
     key: "pending_verification",
-    label: "Needs Verification",
-    badge: "bg-purple-100 text-purple-800",
+    label: "Verifying",
+    short: "Verifying",
     dot: "bg-purple-500",
+    badge: "bg-purple-50 text-purple-700 border border-purple-200",
+    bar: "bg-purple-500",
   },
   {
     key: "pending",
     label: "Pending",
-    badge: "bg-orange-100 text-orange-800",
-    dot: "bg-orange-400",
+    short: "Pending",
+    dot: "bg-amber-400",
+    badge: "bg-amber-50 text-amber-700 border border-amber-200",
+    bar: "bg-amber-400",
   },
   {
     key: "processing",
     label: "Processing",
-    badge: "bg-blue-100 text-blue-800",
-    dot: "bg-blue-400",
+    short: "Processing",
+    dot: "bg-blue-500",
+    badge: "bg-blue-50 text-blue-700 border border-blue-200",
+    bar: "bg-blue-500",
   },
   {
     key: "completed",
     label: "Completed",
-    badge: "bg-green-100 text-green-800",
-    dot: "bg-green-500",
+    short: "Completed",
+    dot: "bg-[var(--primary)]",
+    badge: "bg-[#e8f0eb] text-[var(--primary)] border border-[#c0d4c7]",
+    bar: "bg-[var(--primary)]",
   },
   {
     key: "cancelled",
     label: "Cancelled",
-    badge: "bg-red-100 text-red-800",
+    short: "Cancelled",
     dot: "bg-red-400",
+    badge: "bg-red-50 text-red-600 border border-red-200",
+    bar: "bg-red-400",
   },
 ];
+
+/* ── small reusable download button ── */
+function DownloadBtn({ onClick, label = "Download", small = false }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 bg-[var(--primary)] hover:bg-[var(--primary-hover)]
+        text-white font-semibold rounded-lg transition-all
+        ${small ? "px-2.5 py-1.5 text-xs" : "px-3 py-2 text-xs"}`}
+    >
+      <i className="fas fa-download text-[var(--secondary)] text-[10px]" />
+      {label}
+    </button>
+  );
+}
 
 export default function OrdersManager() {
   const { services, updateOrderStatus, deleteOrder, refreshOrderSummary } =
@@ -53,23 +78,18 @@ export default function OrdersManager() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(0);
-
   const [searchOrderId, setSearchOrderId] = useState("");
   const [expandedOrders, setExpandedOrders] = useState({});
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [orderIdToDelete, setOrderIdToDelete] = useState(null);
-
-  // ─── Lightbox State ──────────────────────────────────────────────────────
   const [lightboxImage, setLightboxImage] = useState(null);
 
-  // ─── Fetch ────────────────────────────────────────────────────────────────
-
+  /* ── fetch ── */
   const fetchOrders = useCallback(
     async (status, pageIndex, replace = false) => {
       const from = pageIndex * PAGE_SIZE;
       const to = from + PAGE_SIZE - 1;
       pageIndex === 0 ? setFetching(true) : setLoadingMore(true);
-
       const { data, error } = await supabase
         .from("orders")
         .select(
@@ -78,7 +98,6 @@ export default function OrdersManager() {
         .eq("status", status)
         .order("created_at", { ascending: false })
         .range(from, to);
-
       if (!error && data) {
         setOrders((prev) => (replace ? data : [...prev, ...data]));
         setHasMore(data.length === PAGE_SIZE);
@@ -126,37 +145,27 @@ export default function OrdersManager() {
     refreshOrderSummary();
   };
 
-  const handleLoadMore = () => fetchOrders(activeStatus, page + 1, false);
-
-  // ─── Expand ───────────────────────────────────────────────────────────────
-
   const toggleExpand = (order) => {
     const isOpen = expandedOrders[order.id];
     setExpandedOrders((prev) => ({ ...prev, [order.id]: !isOpen }));
     if (!isOpen && order.user_data === undefined) fetchOrderDetail(order.id);
   };
 
-  // ─── Status update ────────────────────────────────────────────────────────
-
   const handleStatusChange = async (order, newStatus) => {
     await updateOrderStatus(order.id, newStatus);
-    if (newStatus !== activeStatus) {
+    if (newStatus !== activeStatus)
       setOrders((prev) => prev.filter((o) => o.id !== order.id));
-    } else {
+    else
       setOrders((prev) =>
         prev.map((o) => (o.id === order.id ? { ...o, status: newStatus } : o)),
       );
-    }
     refreshOrderSummary();
   };
-
-  // ─── Delete ───────────────────────────────────────────────────────────────
 
   const handleDeleteOrder = (id) => {
     setOrderIdToDelete(id);
     setIsConfirmModalOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (orderIdToDelete) {
       await deleteOrder(orderIdToDelete);
@@ -167,8 +176,6 @@ export default function OrdersManager() {
     }
   };
 
-  // ─── Service lookup ───────────────────────────────────────────────────────
-
   const getServiceForOrder = (order) => {
     if (!order.service_id) return null;
     for (const list of Object.values(services)) {
@@ -178,32 +185,29 @@ export default function OrdersManager() {
     return null;
   };
 
-  // ─── File helpers ─────────────────────────────────────────────────────────
-
-  const isStorageUrl = (val) =>
-    typeof val === "string" &&
-    (val.startsWith("https://") || val.startsWith("http://"));
-  const isImageUrl = (val) =>
-    isStorageUrl(val) && /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(val);
-  const isBase64 = (val) => typeof val === "string" && val.startsWith("data:");
-  const isBase64Img = (val) =>
-    typeof val === "string" && val.startsWith("data:image");
+  /* ── file helpers ── */
+  const isStorageUrl = (v) =>
+    typeof v === "string" &&
+    (v.startsWith("https://") || v.startsWith("http://"));
+  const isImageUrl = (v) =>
+    isStorageUrl(v) && /\.(jpe?g|png|gif|webp|bmp|svg)(\?|$)/i.test(v);
+  const isBase64 = (v) => typeof v === "string" && v.startsWith("data:");
+  const isBase64Img = (v) =>
+    typeof v === "string" && v.startsWith("data:image");
 
   const downloadFromUrl = async (url, baseName) => {
     try {
       const res = await fetch(url);
       const blob = await res.blob();
-      const objectUrl = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      const urlFileName = decodeURIComponent(
-        new URL(url).pathname.split("/").pop(),
-      );
-      link.href = objectUrl;
-      link.download = urlFileName || baseName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(objectUrl);
+      const obj = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = obj;
+      a.download =
+        decodeURIComponent(new URL(url).pathname.split("/").pop()) || baseName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(obj);
     } catch {
       window.open(url, "_blank");
     }
@@ -211,152 +215,126 @@ export default function OrdersManager() {
 
   const downloadBase64 = (dataUrl, baseName) => {
     const mimeMatch = dataUrl.match(/^data:([^;]+);/);
-    const mime = mimeMatch ? mimeMatch[1] : "";
-    const mimeMap = {
+    const mime = mimeMatch?.[1] || "";
+    const extMap = {
       "image/jpeg": "jpg",
       "image/png": "png",
       "image/gif": "gif",
       "image/webp": "webp",
-      "image/bmp": "bmp",
       "application/pdf": "pdf",
       "application/msword": "doc",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        "docx",
-      "application/vnd.ms-excel": "xls",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
-        "xlsx",
       "text/plain": "txt",
-      "text/csv": "csv",
     };
-    const ext = mimeMap[mime] || "bin";
-    const link = document.createElement("a");
-    link.href = dataUrl;
-    link.download = `${baseName.replace(/\.[^.]+$/, "")}.${ext}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const ext = extMap[mime] || "bin";
+    const a = document.createElement("a");
+    a.href = dataUrl;
+    a.download = `${baseName.replace(/\.[^.]+$/, "")}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
-  // ─── Lightbox handlers ──────────────────────────────────────────────────
-
-  const openLightbox = (imageUrl) => {
-    setLightboxImage(imageUrl);
+  const openLightbox = (url) => {
+    setLightboxImage(url);
     document.body.style.overflow = "hidden";
   };
-
   const closeLightbox = () => {
     setLightboxImage(null);
     document.body.style.overflow = "";
   };
 
-  const handleLightboxClick = (e) => {
-    if (e.target === e.currentTarget) {
-      closeLightbox();
-    }
-  };
-
   useEffect(() => {
-    const handleEsc = (e) => {
-      if (e.key === "Escape" && lightboxImage) {
-        closeLightbox();
-      }
+    const onEsc = (e) => {
+      if (e.key === "Escape" && lightboxImage) closeLightbox();
     };
-    window.addEventListener("keydown", handleEsc);
-    return () => window.removeEventListener("keydown", handleEsc);
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
   }, [lightboxImage]);
 
-  // ─── Field renderer ───────────────────────────────────────────────────────
-
+  /* ── field renderer ── */
   const renderFieldValue = (fieldName, value) => {
     if (!value)
       return (
-        <div key={fieldName}>
-          <span className="font-medium text-gray-700">{fieldName}:</span>
-          <span className="ml-2 text-gray-400 italic">N/A</span>
+        <div
+          key={fieldName}
+          className="flex justify-between items-center py-2 border-b border-[var(--border)] last:border-0 gap-2"
+        >
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide shrink-0">
+            {fieldName}
+          </span>
+          <span className="text-xs text-[var(--text-muted)] italic">N/A</span>
         </div>
       );
 
-    if (isImageUrl(value))
+    if (isImageUrl(value) || isBase64Img(value))
       return (
-        <div key={fieldName} className="space-y-2">
-          <span className="font-medium text-gray-700 block">{fieldName}:</span>
+        <div
+          key={fieldName}
+          className="py-2 border-b border-[var(--border)] last:border-0"
+        >
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide block mb-2">
+            {fieldName}
+          </span>
           <img
             src={value}
             alt={fieldName}
             loading="lazy"
-            className="max-h-48 object-contain rounded-xl border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
+            className="max-h-40 object-contain rounded-xl border border-[var(--border)] cursor-zoom-in hover:opacity-90 transition-opacity mb-2"
             onClick={() => openLightbox(value)}
           />
-          <button
-            onClick={() => downloadFromUrl(value, fieldName)}
-            className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-download"></i> Download
-          </button>
-        </div>
-      );
-
-    if (isStorageUrl(value))
-      return (
-        <div key={fieldName} className="space-y-1">
-          <span className="font-medium text-gray-700 block">{fieldName}:</span>
-          <button
-            onClick={() => downloadFromUrl(value, fieldName)}
-            className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-download"></i> Download File
-          </button>
-        </div>
-      );
-
-    if (isBase64Img(value))
-      return (
-        <div key={fieldName} className="space-y-2">
-          <span className="font-medium text-gray-700 block">{fieldName}:</span>
-          <img
-            src={value}
-            alt={fieldName}
-            loading="lazy"
-            className="max-h-48 object-contain rounded-xl border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
-            onClick={() => openLightbox(value)}
+          <DownloadBtn
+            small
+            onClick={() =>
+              isImageUrl(value)
+                ? downloadFromUrl(value, fieldName)
+                : downloadBase64(value, fieldName)
+            }
           />
-          <button
-            onClick={() => downloadBase64(value, fieldName)}
-            className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-download"></i> Download
-          </button>
         </div>
       );
 
-    if (isBase64(value))
+    if (isStorageUrl(value) || isBase64(value))
       return (
-        <div key={fieldName} className="space-y-1">
-          <span className="font-medium text-gray-700 block">{fieldName}:</span>
-          <button
-            onClick={() => downloadBase64(value, fieldName)}
-            className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-          >
-            <i className="fas fa-download"></i> Download File
-          </button>
+        <div
+          key={fieldName}
+          className="flex justify-between items-center py-2 border-b border-[var(--border)] last:border-0 gap-2"
+        >
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
+            {fieldName}
+          </span>
+          <DownloadBtn
+            small
+            label="Download File"
+            onClick={() =>
+              isStorageUrl(value)
+                ? downloadFromUrl(value, fieldName)
+                : downloadBase64(value, fieldName)
+            }
+          />
         </div>
       );
 
     return (
-      <div key={fieldName}>
-        <span className="font-medium text-gray-700">{fieldName}:</span>
-        <span className="ml-2 text-gray-800 break-all">{value}</span>
+      <div
+        key={fieldName}
+        className="flex justify-between items-start py-2 border-b border-[var(--border)] last:border-0 gap-3"
+      >
+        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide shrink-0">
+          {fieldName}
+        </span>
+        <span className="text-sm text-[var(--text)] font-medium text-right break-all">
+          {value}
+        </span>
       </div>
     );
   };
 
-  // ─── Deliverables panel ───────────────────────────────────────────────────
-
+  /* ── deliverables panel ── */
   function DeliverablesPanel({ order }) {
     const fileInputRef = useRef(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState(null);
-    const [removing, setRemoving] = useState(null); // index being removed
+    const [removing, setRemoving] = useState(null);
 
     const deliverables = Array.isArray(order.deliverable_urls)
       ? order.deliverable_urls
@@ -380,8 +358,7 @@ export default function OrdersManager() {
       setUploadError(null);
       try {
         const item = await uploadDeliverable(file);
-        const updated = [...deliverables, item];
-        await saveDeliverables(updated);
+        await saveDeliverables([...deliverables, item]);
       } catch {
         setUploadError("Upload failed. Please try again.");
       } finally {
@@ -395,32 +372,37 @@ export default function OrdersManager() {
       try {
         const item = deliverables[index];
         const url = typeof item === "string" ? item : item?.url;
-        // Delete from storage
-        if (url && url.includes("/order-files/")) {
+        if (url?.includes("/order-files/")) {
           const match = url.match(/\/order-files\/(.+)$/);
           if (match)
             await supabase.storage.from("order-files").remove([match[1]]);
         }
-        const updated = deliverables.filter((_, i) => i !== index);
-        await saveDeliverables(updated);
+        await saveDeliverables(deliverables.filter((_, i) => i !== index));
       } finally {
         setRemoving(null);
       }
     };
 
-    const isDeliverableImage = (url) => {
-      if (!url) return false;
-      return isImageUrl(url) || isBase64Img(url);
-    };
-
     return (
-      <div className="mt-4 pt-4 border-t border-gray-200">
+      <div className="mt-4 pt-4 border-t border-[var(--border)]">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-            Deliverable Files
-          </h4>
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 bg-[var(--primary)] rounded-md flex items-center justify-center">
+              <i className="fas fa-folder-open text-[var(--secondary)] text-[9px]" />
+            </div>
+            <h4 className="text-xs font-bold text-[var(--text)] uppercase tracking-widest">
+              Deliverables
+            </h4>
+            {deliverables.length > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 bg-[var(--background)] border border-[var(--border)] rounded-full text-[var(--text-muted)]">
+                {deliverables.length}
+              </span>
+            )}
+          </div>
           <label
-            className={`flex items-center gap-1.5 text-xs font-medium text-[#4169E1] cursor-pointer hover:text-[#3658c9] transition-colors ${uploading ? "opacity-50 pointer-events-none" : ""}`}
+            className={`flex items-center gap-1.5 text-xs font-bold cursor-pointer px-3 py-1.5 rounded-lg
+            border border-[var(--primary)] text-[var(--primary)] hover:bg-[var(--primary)] hover:text-white
+            transition-all ${uploading ? "opacity-50 pointer-events-none" : ""}`}
           >
             <input
               ref={fileInputRef}
@@ -431,26 +413,30 @@ export default function OrdersManager() {
             />
             {uploading ? (
               <>
-                <i className="fas fa-spinner fa-spin"></i> Uploading...
+                <i className="fas fa-spinner fa-spin text-[10px]" /> Uploading…
               </>
             ) : (
               <>
-                <i className="fas fa-plus"></i> Add File
+                <i className="fas fa-plus text-[10px]" /> Add File
               </>
             )}
           </label>
         </div>
 
         {uploadError && (
-          <p className="text-red-500 text-xs mb-2 flex items-center gap-1">
-            <i className="fas fa-circle-exclamation"></i> {uploadError}
-          </p>
+          <div className="flex items-center gap-2 mb-3 px-3 py-2 bg-red-50 border border-red-100 rounded-lg">
+            <i className="fas fa-circle-exclamation text-red-400 text-xs" />
+            <p className="text-xs text-red-600 font-medium">{uploadError}</p>
+          </div>
         )}
 
         {deliverables.length === 0 ? (
-          <p className="text-xs text-gray-400 italic">
-            No deliverables uploaded yet.
-          </p>
+          <div className="flex items-center gap-2 px-3 py-3 bg-[var(--background)] border border-dashed border-[var(--border)] rounded-xl">
+            <i className="fas fa-inbox text-[var(--text-muted)] opacity-40 text-sm" />
+            <p className="text-xs text-[var(--text-muted)]">
+              No deliverables uploaded yet.
+            </p>
+          </div>
         ) : (
           <div className="space-y-2">
             {deliverables.map((item, i) => {
@@ -460,43 +446,43 @@ export default function OrdersManager() {
                   ? decodeURIComponent(new URL(url).pathname.split("/").pop())
                   : item?.name ||
                     decodeURIComponent(new URL(url).pathname.split("/").pop());
-              const isImg = isDeliverableImage(url);
-              
+              const isImg = isImageUrl(url) || isBase64Img(url);
               return (
                 <div
                   key={i}
-                  className="flex items-center justify-between bg-white border border-gray-200 rounded-xl px-3 py-2.5 gap-2"
+                  className="flex items-center gap-3 bg-[var(--background)] border border-[var(--border)] rounded-xl px-3 py-2.5"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <i className={`${isImg ? 'fas fa-image' : 'fas fa-file'} text-[#4169E1] shrink-0 text-sm`}></i>
-                    {isImg ? (
-                      <img
-                        src={url}
-                        alt={name}
-                        className="h-10 w-10 object-cover rounded-lg border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
-                        onClick={() => openLightbox(url)}
-                      />
-                    ) : null}
-                    <span className="text-sm text-gray-700 truncate">
-                      {name}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <button
+                  {isImg ? (
+                    <img
+                      src={url}
+                      alt={name}
+                      className="w-9 h-9 object-cover rounded-lg border border-[var(--border)] cursor-zoom-in hover:opacity-80 transition-opacity shrink-0"
+                      onClick={() => openLightbox(url)}
+                    />
+                  ) : (
+                    <div className="w-9 h-9 bg-white border border-[var(--border)] rounded-lg flex items-center justify-center shrink-0">
+                      <i className="fas fa-file text-[var(--primary)] text-sm" />
+                    </div>
+                  )}
+                  <span className="text-sm text-[var(--text)] font-medium truncate flex-1 min-w-0">
+                    {name}
+                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <DownloadBtn
+                      small
+                      label="DL"
                       onClick={() => downloadFromUrl(url, name)}
-                      className="text-xs text-[#4169E1] hover:text-[#3658c9] font-medium px-2 py-1 rounded-lg hover:bg-[#4169E1]/10 transition-colors"
-                    >
-                      <i className="fas fa-download mr-1"></i>DL
-                    </button>
+                    />
                     <button
                       onClick={() => handleRemove(i)}
                       disabled={removing === i}
-                      className="text-xs text-red-400 hover:text-red-600 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-40"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-red-400
+                        hover:bg-red-50 hover:text-red-600 transition-all disabled:opacity-40"
                     >
                       {removing === i ? (
-                        <i className="fas fa-spinner fa-spin"></i>
+                        <i className="fas fa-spinner fa-spin text-xs" />
                       ) : (
-                        <i className="fas fa-trash"></i>
+                        <i className="fas fa-trash text-xs" />
                       )}
                     </button>
                   </div>
@@ -509,290 +495,363 @@ export default function OrdersManager() {
     );
   }
 
-  // ─── Visible list ─────────────────────────────────────────────────────────
-
+  /* ── filtered list ── */
   const visibleOrders = searchOrderId.trim()
     ? orders.filter((o) =>
         o.order_id?.toLowerCase().includes(searchOrderId.toLowerCase()),
       )
     : orders;
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  const activeTab = STATUS_TABS.find((t) => t.key === activeStatus);
 
+  /* ── render ── */
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-        <h2 className="text-2xl font-bold text-gray-900">Orders Manager</h2>
+    <div className="min-w-0">
+      {/* ── Page header ── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-6">
+        <div>
+          <h2 className="text-2xl font-extrabold text-[var(--text)] tracking-tight">
+            Orders
+          </h2>
+          <p className="text-sm text-[var(--text-muted)] mt-0.5">
+            Manage and update customer service orders
+          </p>
+        </div>
         <button
           onClick={handleRefresh}
           disabled={fetching}
-          className="flex items-center gap-2 bg-[#4169E1] hover:bg-[#3658c9] disabled:bg-gray-300 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors"
+          className="flex items-center gap-2 bg-[var(--primary)] hover:bg-[var(--primary-hover)]
+            disabled:opacity-50 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all hover:shadow-md"
         >
-          <i className={`fas fa-rotate-right ${fetching ? "fa-spin" : ""}`}></i>{" "}
+          <i
+            className={`fas fa-rotate-right text-[var(--secondary)] text-xs ${fetching ? "fa-spin" : ""}`}
+          />
           Refresh
         </button>
       </div>
 
-      {/* Status Pill Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6">
+      {/* ── Status tabs ── */}
+      <div className="flex flex-wrap gap-2 mb-5">
         {STATUS_TABS.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveStatus(tab.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all border ${
-              activeStatus === tab.key
-                ? `${tab.badge} border-transparent shadow-sm`
-                : "bg-white text-gray-600 border-gray-200 hover:border-gray-300"
-            }`}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold transition-all border
+              ${
+                activeStatus === tab.key
+                  ? `${tab.badge} shadow-sm`
+                  : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              }`}
           >
-            <span className={`w-2 h-2 rounded-full ${tab.dot}`}></span>
+            <span className={`w-2 h-2 rounded-full shrink-0 ${tab.dot}`} />
             {tab.label}
           </button>
         ))}
       </div>
 
-      {/* Search */}
-      <div className="mb-6 flex gap-2">
-        <input
-          type="text"
-          value={searchOrderId}
-          onChange={(e) => setSearchOrderId(e.target.value)}
-          placeholder="Search by order ID..."
-          className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] focus:ring-2 focus:ring-[#4169E1]/20 text-sm"
-        />
+      {/* ── Search bar ── */}
+      <div className="flex gap-2 mb-5">
+        <div className="relative flex-1">
+          <div
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 w-6 h-6
+            bg-[var(--primary)] rounded-lg flex items-center justify-center pointer-events-none"
+          >
+            <i className="fas fa-magnifying-glass text-[var(--secondary)] text-[9px]" />
+          </div>
+          <input
+            type="text"
+            value={searchOrderId}
+            onChange={(e) => setSearchOrderId(e.target.value)}
+            placeholder="Search by order ID…"
+            className="w-full pl-12 pr-4 py-2.5 rounded-xl border border-[var(--border)]
+              bg-white text-[var(--text)] text-sm placeholder:text-[var(--text-muted)]
+              focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[rgba(26,67,40,0.12)]
+              transition-all"
+          />
+        </div>
         {searchOrderId && (
           <button
             onClick={() => setSearchOrderId("")}
-            className="px-4 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-sm font-medium text-gray-700 transition-colors"
+            className="px-4 py-2.5 bg-white border border-[var(--border)] hover:border-[var(--primary)]
+              text-[var(--text-muted)] hover:text-[var(--primary)] rounded-xl text-sm font-bold transition-all"
           >
             Clear
           </button>
         )}
       </div>
 
-      {/* Order List */}
+      {/* ── Content ── */}
       {fetching ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="text-center">
-            <i className="fas fa-spinner fa-spin text-4xl text-[#4169E1] mb-3"></i>
-            <p className="text-gray-500 text-sm">Loading orders...</p>
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <div className="w-14 h-14 bg-white border border-[var(--border)] rounded-2xl flex items-center justify-center shadow-sm">
+            <i className="fas fa-spinner fa-spin text-[var(--primary)] text-xl" />
           </div>
+          <p className="text-[var(--text-muted)] text-sm font-medium">
+            Loading orders…
+          </p>
         </div>
       ) : visibleOrders.length === 0 ? (
-        <div className="bg-white p-12 rounded-2xl shadow-lg text-center text-gray-400">
-          <i className="fas fa-inbox text-5xl mb-4 block text-gray-200"></i>
-          <p className="font-medium">
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-16 text-center">
+          <div
+            className="w-16 h-16 bg-[var(--background)] border border-[var(--border)] rounded-2xl
+            flex items-center justify-center mx-auto mb-4"
+          >
+            <i className="fas fa-inbox text-[var(--text-muted)] text-2xl opacity-40" />
+          </div>
+          <h3 className="font-bold text-[var(--text)] mb-1">No orders found</h3>
+          <p className="text-sm text-[var(--text-muted)]">
             {searchOrderId
-              ? "No order matches that ID"
-              : `No ${activeStatus} orders`}
+              ? "No order matches that ID."
+              : `No ${activeTab?.label.toLowerCase()} orders.`}
           </p>
         </div>
       ) : (
-        <>
-          <div className="space-y-3">
-            {visibleOrders.map((order) => {
-              const service = getServiceForOrder(order);
-              const isExpanded = expandedOrders[order.id];
-              const tab = STATUS_TABS.find((t) => t.key === order.status);
+        <div className="space-y-3">
+          {visibleOrders.map((order) => {
+            const service = getServiceForOrder(order);
+            const isExpanded = expandedOrders[order.id];
+            const tab = STATUS_TABS.find((t) => t.key === order.status);
+            const date = new Date(order.created_at).toLocaleDateString(
+              "en-GB",
+              {
+                day: "numeric",
+                month: "short",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              },
+            );
 
-              return (
+            return (
+              <div
+                key={order.id}
+                className="bg-white rounded-2xl border border-[var(--border)] overflow-hidden
+                  transition-all duration-200 hover:shadow-sm"
+              >
+                {/* Status accent bar */}
                 <div
-                  key={order.id}
-                  className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+                  className={`h-0.5 w-full ${tab?.bar || "bg-[var(--border)]"}`}
+                />
+
+                {/* ── Header row ── */}
+                <div
+                  className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4
+                  cursor-pointer hover:bg-[var(--background)] transition-colors"
+                  onClick={() => toggleExpand(order)}
                 >
-                  {/* Header row */}
-                  <div
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                    onClick={() => toggleExpand(order)}
-                  >
+                  <div className="flex items-start gap-3 min-w-0">
+                    {/* Status dot */}
+                    <div
+                      className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${tab?.dot || "bg-[var(--border)]"}`}
+                    />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="font-bold text-gray-900 text-sm truncate">
-                          #{order.order_id}
+                        <p className="font-bold text-[var(--text)] text-sm font-mono">
+                          {order.order_id}
                         </p>
                         <span
-                          className={`px-2 py-0.5 rounded-full text-xs font-semibold ${tab?.badge || "bg-gray-100 text-gray-700"}`}
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${tab?.badge}`}
                         >
-                          {order.status}
+                          {tab?.short}
                         </span>
                       </div>
-                      <p className="text-sm text-gray-500 truncate">
+                      <p className="text-sm text-[var(--text-muted)] truncate mt-0.5">
                         {service?.name ||
                           order.service?.name ||
                           "Unknown service"}
                       </p>
-                      <p className="text-xs text-gray-400">
-                        {new Date(order.created_at).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
+                      <p className="text-xs text-[var(--text-muted)] opacity-60 mt-0.5">
+                        {date}
                       </p>
-                    </div>
-
-                    <div
-                      className="flex items-center gap-2 shrink-0"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <select
-                        value={order.status}
-                        onChange={(e) =>
-                          handleStatusChange(order, e.target.value)
-                        }
-                        className="px-3 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-[#4169E1] bg-white"
-                      >
-                        <option value="pending_verification">
-                          Needs Verification
-                        </option>
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                      <button
-                        onClick={() => handleDeleteOrder(order.id)}
-                        className="bg-red-50 text-red-600 hover:bg-red-100 px-3 py-2 rounded-xl text-sm transition-colors"
-                      >
-                        <i className="fas fa-trash"></i>
-                      </button>
-                      <i
-                        className={`fas fa-chevron-${isExpanded ? "up" : "down"} text-gray-300 text-xs`}
-                      ></i>
                     </div>
                   </div>
 
-                  {/* Expanded detail */}
-                  {isExpanded && (
-                    <div className="border-t border-gray-100 bg-gray-50 p-4">
-                      {order.user_data === undefined ? (
-                        <div className="flex items-center gap-2 text-gray-400 text-sm py-2">
-                          <i className="fas fa-spinner fa-spin"></i> Loading
-                          details...
-                        </div>
-                      ) : (
-                        <>
-                          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                            Customer Details
-                          </h4>
-                          <div className="flex flex-col gap-3 text-sm">
+                  {/* Actions — stop propagation */}
+                  <div
+                    className="flex items-center gap-2 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <select
+                      value={order.status}
+                      onChange={(e) =>
+                        handleStatusChange(order, e.target.value)
+                      }
+                      className="px-3 py-2 text-xs rounded-xl border border-[var(--border)]
+                        bg-[var(--background)] text-[var(--text)] font-semibold
+                        focus:outline-none focus:border-[var(--primary)] transition-all cursor-pointer"
+                    >
+                      <option value="pending_verification">
+                        Needs Verification
+                      </option>
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="completed">Completed</option>
+                      <option value="cancelled">Cancelled</option>
+                    </select>
+                    <button
+                      onClick={() => handleDeleteOrder(order.id)}
+                      className="w-9 h-9 flex items-center justify-center rounded-xl
+                        bg-red-50 text-red-400 hover:bg-red-100 hover:text-red-600 transition-all border border-red-100"
+                    >
+                      <i className="fas fa-trash-can text-xs" />
+                    </button>
+                    <div
+                      className={`w-7 h-7 flex items-center justify-center rounded-lg
+                      bg-[var(--background)] border border-[var(--border)] transition-transform duration-200
+                      ${isExpanded ? "rotate-180" : ""}`}
+                    >
+                      <i className="fas fa-chevron-down text-[var(--text-muted)] text-[10px]" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Expanded detail ── */}
+                {isExpanded && (
+                  <div className="border-t border-[var(--border)] bg-[var(--background)] p-4 sm:p-5">
+                    {order.user_data === undefined ? (
+                      <div className="flex items-center gap-2 text-[var(--text-muted)] text-sm py-4 justify-center">
+                        <i className="fas fa-spinner fa-spin" /> Loading
+                        details…
+                      </div>
+                    ) : (
+                      <div className="grid sm:grid-cols-2 gap-5">
+                        {/* Left: customer details */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-6 h-6 bg-[var(--primary)] rounded-md flex items-center justify-center">
+                              <i className="fas fa-user text-[var(--secondary)] text-[9px]" />
+                            </div>
+                            <h4 className="text-xs font-bold text-[var(--text)] uppercase tracking-widest">
+                              Customer Details
+                            </h4>
+                          </div>
+                          <div className="bg-white border border-[var(--border)] rounded-xl p-3">
                             {service?.fields?.length > 0
-                              ? service.fields.map((field) =>
+                              ? service.fields.map((f) =>
                                   renderFieldValue(
-                                    field.name,
-                                    order.user_data?.[field.name],
+                                    f.name,
+                                    order.user_data?.[f.name],
                                   ),
                                 )
                               : Object.entries(order.user_data || {}).map(
-                                  ([key, val]) => renderFieldValue(key, val),
+                                  ([k, v]) => renderFieldValue(k, v),
                                 )}
                           </div>
+                        </div>
 
-                          {/* Proof of Payment */}
+                        {/* Right: receipt + deliverables */}
+                        <div>
+                          {/* Receipt */}
                           {order.receipt_url && (
-                            <div className="mt-4 pt-4 border-t border-gray-200">
-                              <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
-                                Proof of Payment
-                              </h4>
-                              {isImageUrl(order.receipt_url) ? (
-                                <div className="space-y-2">
-                                  <img
-                                    src={order.receipt_url}
-                                    alt="Payment receipt"
-                                    loading="lazy"
-                                    className="max-h-64 object-contain rounded-xl border border-gray-200 cursor-zoom-in hover:opacity-90 transition-opacity"
-                                    onClick={() => openLightbox(order.receipt_url)}
-                                  />
-                                  <button
+                            <div className="mb-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <div className="w-6 h-6 bg-[var(--primary)] rounded-md flex items-center justify-center">
+                                  <i className="fas fa-receipt text-[var(--secondary)] text-[9px]" />
+                                </div>
+                                <h4 className="text-xs font-bold text-[var(--text)] uppercase tracking-widest">
+                                  Proof of Payment
+                                </h4>
+                              </div>
+                              <div className="bg-white border border-[var(--border)] rounded-xl p-3 space-y-2">
+                                {isImageUrl(order.receipt_url) ? (
+                                  <>
+                                    <img
+                                      src={order.receipt_url}
+                                      alt="Receipt"
+                                      loading="lazy"
+                                      className="max-h-48 w-full object-contain rounded-lg border border-[var(--border)]
+                                        cursor-zoom-in hover:opacity-90 transition-opacity"
+                                      onClick={() =>
+                                        openLightbox(order.receipt_url)
+                                      }
+                                    />
+                                    <DownloadBtn
+                                      label="Download Receipt"
+                                      onClick={() =>
+                                        downloadFromUrl(
+                                          order.receipt_url,
+                                          "receipt",
+                                        )
+                                      }
+                                    />
+                                  </>
+                                ) : (
+                                  <DownloadBtn
+                                    label="Download Receipt"
                                     onClick={() =>
                                       downloadFromUrl(
                                         order.receipt_url,
                                         "receipt",
                                       )
                                     }
-                                    className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                                  >
-                                    <i className="fas fa-download"></i> Download
-                                    Receipt
-                                  </button>
-                                </div>
-                              ) : (
-                                <button
-                                  onClick={() =>
-                                    downloadFromUrl(
-                                      order.receipt_url,
-                                      "receipt",
-                                    )
-                                  }
-                                  className="bg-[#4169E1] hover:bg-[#3658c9] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
-                                >
-                                  <i className="fas fa-download"></i> Download
-                                  Receipt
-                                </button>
-                              )}
+                                  />
+                                )}
+                              </div>
                             </div>
                           )}
 
-                          {/* Deliverables — always shown, admin can upload anytime */}
+                          {/* Deliverables */}
                           <DeliverablesPanel order={order} />
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Load More */}
-          {hasMore && !searchOrderId && (
-            <div className="mt-6 text-center">
-              <button
-                onClick={handleLoadMore}
-                disabled={loadingMore}
-                className="bg-white border border-gray-200 hover:border-[#4169E1] hover:text-[#4169E1] text-gray-600 px-8 py-3 rounded-xl text-sm font-medium transition-all disabled:opacity-50"
-              >
-                {loadingMore ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>Loading...
-                  </>
-                ) : (
-                  "Load more orders"
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
-              </button>
-            </div>
-          )}
-        </>
+              </div>
+            );
+          })}
+        </div>
       )}
 
-      {/* Lightbox Modal */}
+      {/* ── Load more ── */}
+      {hasMore && !searchOrderId && !fetching && (
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => fetchOrders(activeStatus, page + 1, false)}
+            disabled={loadingMore}
+            className="inline-flex items-center gap-2 bg-white border border-[var(--border)]
+              hover:border-[var(--primary)] hover:text-[var(--primary)] text-[var(--text-muted)]
+              px-8 py-3 rounded-xl text-sm font-bold transition-all disabled:opacity-50"
+          >
+            {loadingMore ? (
+              <>
+                <i className="fas fa-spinner fa-spin text-xs" /> Loading…
+              </>
+            ) : (
+              <>
+                <i className="fas fa-chevron-down text-xs" /> Load more orders
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      {/* ── Lightbox ── */}
       {lightboxImage && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn"
-          onClick={handleLightboxClick}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm"
+          onClick={(e) => e.target === e.currentTarget && closeLightbox()}
         >
-          <div className="relative max-w-[90vw] max-h-[90vh]">
+          <div className="relative max-w-[92vw] max-h-[92vh]">
             <button
               onClick={closeLightbox}
-              className="absolute -top-12 right-0 text-white hover:text-gray-300 text-3xl font-light transition-colors"
-              aria-label="Close lightbox"
+              className="absolute -top-11 right-0 w-9 h-9 bg-white/15 hover:bg-white/25
+                border border-white/20 rounded-xl flex items-center justify-center
+                text-white transition-all"
+              aria-label="Close"
             >
-              ×
+              <i className="fas fa-xmark text-sm" />
             </button>
             <img
               src={lightboxImage}
               alt="Preview"
-              className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl"
+              className="max-w-[92vw] max-h-[92vh] object-contain rounded-2xl shadow-2xl"
             />
           </div>
         </div>
       )}
 
+      {/* ── Confirm delete modal ── */}
       <ConfirmModal
         isOpen={isConfirmModalOpen}
         onClose={() => {
@@ -803,21 +862,6 @@ export default function OrdersManager() {
         title="Delete Order"
         message="Are you sure you want to delete this order? This action cannot be undone."
       />
-
-      {/* Add animation styles */}
-      <style jsx>{`
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.2s ease-in-out;
-        }
-      `}</style>
     </div>
   );
 }
