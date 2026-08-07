@@ -257,9 +257,9 @@ export default function OrdersManager() {
       return (
         <div
           key={fieldName}
-          className="flex justify-between items-center py-2 border-b border-[var(--border)] last:border-0 gap-2"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 border-b border-[var(--border)] last:border-0 gap-2"
         >
-          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide shrink-0">
+          <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide sm:shrink-0 break-words">
             {fieldName}
           </span>
           <span className="text-xs text-[var(--text-muted)] italic">N/A</span>
@@ -297,7 +297,7 @@ export default function OrdersManager() {
       return (
         <div
           key={fieldName}
-          className="flex justify-between items-center py-2 border-b border-[var(--border)] last:border-0 gap-2"
+          className="flex flex-col sm:flex-row sm:justify-between sm:items-center py-2 border-b border-[var(--border)] last:border-0 gap-2"
         >
           <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide">
             {fieldName}
@@ -317,12 +317,12 @@ export default function OrdersManager() {
     return (
       <div
         key={fieldName}
-        className="flex justify-between items-start py-2 border-b border-[var(--border)] last:border-0 gap-3"
+        className="flex flex-col sm:flex-row sm:justify-between sm:items-start py-2 border-b border-[var(--border)] last:border-0 gap-1 sm:gap-3"
       >
-        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide shrink-0">
+        <span className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-wide sm:shrink-0 break-words">
           {fieldName}
         </span>
-        <span className="text-sm text-[var(--text)] font-medium text-right break-all">
+        <span className="text-sm text-[var(--text)] font-medium text-left sm:text-right break-words min-w-0 w-full sm:w-auto">
           {value}
         </span>
       </div>
@@ -714,9 +714,9 @@ export default function OrdersManager() {
                         details…
                       </div>
                     ) : (
-                      <div className="grid sm:grid-cols-2 gap-5">
+                      <div className="grid sm:grid-cols-2 gap-5 min-w-0">
                         {/* Left: customer details */}
-                        <div>
+                        <div className="min-w-0">
                           <div className="flex items-center gap-2 mb-3">
                             <div className="w-6 h-6 bg-[var(--primary)] rounded-md flex items-center justify-center">
                               <i className="fas fa-user text-[var(--secondary)] text-[9px]" />
@@ -725,7 +725,7 @@ export default function OrdersManager() {
                               Customer Details
                             </h4>
                           </div>
-                          <div className="bg-white border border-[var(--border)] rounded-xl p-3">
+                          <div className="bg-white border border-[var(--border)] rounded-xl p-3 overflow-hidden">
                             {service?.fields?.length > 0
                               ? service.fields.map((f) =>
                                   renderFieldValue(
@@ -740,7 +740,7 @@ export default function OrdersManager() {
                         </div>
 
                         {/* Right: receipt + deliverables */}
-                        <div>
+                        <div className="min-w-0">
                           {/* Receipt */}
                           {order.receipt_url && (
                             <div className="mb-4">
