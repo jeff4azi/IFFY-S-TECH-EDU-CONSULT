@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAdmin } from "../contexts/AdminContext";
 import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 import { uploadOrderFile } from "../lib/imageUpload";
+import { sendOrderNotification } from "../lib/emailNotify";
 
 const PENDING_ORDER_KEY = "itc_pending_order";
 const ORDER_IDS_KEY = "itc_order_ids";
@@ -119,6 +120,15 @@ export default function PaymentPage() {
         /* ignore */
       }
       setCreatedOrderId(orderId);
+
+      // Fire-and-forget email alert — never blocks or fails the order flow
+      sendOrderNotification({
+        orderId,
+        serviceName: pendingOrder.service?.name,
+        price: pendingOrder.service?.price,
+        formData: pendingOrder.formData,
+        receiptUrl,
+      });
     } catch (err) {
       setUploadError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -201,141 +211,68 @@ export default function PaymentPage() {
         {/* Step indicator */}
         <div className="max-w-lg mx-auto px-4 pb-6">
           <div className="relative flex items-start justify-between">
-            {/* track */}
-            <div className="absolute top-4 left-4 right-4 h-0.5 bg-white/15 z-0" />
-            <div
-              className="absolute top-4 left-4 h-0.5 bg-[var(--secondary)] z-0 transition-all duration-500"
-              style={{
-                width:
-                  currentStep === 1 ? "0%" : currentStep === 2 ? "50%" : "100%",
-              }}
+            <Step
+              number={1}
+              label="Upload"
+              active={currentStep === 1}
+              done={currentStep > 1}
             />
-            {[
-              { n: 1, label: "Transfer" },
-              { n: 2, label: "Upload" },
-              { n: 3, label: "Confirmed" },
-            ].map((s) => (
-              <div key={s.n} className="relative z-10">
-                <Step
-                  number={s.n}
-                  label={s.label}
-                  active={currentStep === s.n}
-                  done={currentStep > s.n}
-                />
-              </div>
-            ))}
+            <Step
+              number={2}
+              label="Confirm"
+              active={currentStep === 2}
+              done={currentStep > 2}
+            />
+            <Step
+              number={3}
+              label="Done"
+              active={currentStep === 3}
+              done={false}
+            />
           </div>
         </div>
       </header>
 
-      <main className="max-w-lg mx-auto px-4 pb-24 -mt-0">
-        {/* ── Service summary strip ── */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl p-4 mb-4 mt-5 flex items-center justify-between gap-4 shadow-sm">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 bg-[var(--background)] border border-[var(--border)] rounded-xl flex items-center justify-center shrink-0">
-              <i className="fas fa-receipt text-[var(--primary)] text-sm" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-                Service
-              </p>
-              <p className="font-bold text-[var(--text)] text-sm truncate">
-                {service.name}
-              </p>
-            </div>
-          </div>
-          <div className="shrink-0 text-right">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
-              Amount
-            </p>
-            <p className="text-xl font-extrabold text-[var(--primary)]">
-              {service.price}
-            </p>
-          </div>
+      <main className="max-w-lg mx-auto px-4 py-6">
+        {/* ── Order summary ── */}
+        <div className="bg-white border border-[var(--border)] rounded-2xl p-5 mb-4 shadow-sm">
+          <p className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-widest mb-1">
+            Service
+          </p>
+          <p className="text-lg font-bold text-[var(--text)]">{service.name}</p>
+          <p className="text-sm text-[var(--secondary)] font-bold mt-1">
+            {service.price}
+          </p>
         </div>
 
-        {/* ── Bank details card ── */}
-        <div className="bg-white border border-[var(--border)] rounded-2xl overflow-hidden mb-4 shadow-sm">
-          <div className="bg-[var(--primary)] px-5 py-3.5 flex items-center gap-3">
-            <div className="w-8 h-8 bg-[var(--secondary)] rounded-lg flex items-center justify-center shrink-0">
-              <i className="fas fa-building-columns text-white text-xs" />
-            </div>
-            <div>
-              <h2 className="text-sm font-bold text-white">
-                Bank Transfer Details
-              </h2>
-              <p className="text-[10px] text-white/60">
-                Send exact amount to this account
-              </p>
-            </div>
-          </div>
-
-          <div className="p-5 space-y-0 divide-y divide-[var(--border)]">
-            {[
-              {
-                icon: "fa-landmark",
-                label: "Bank Name",
-                value: settings.paymentDetails.bankName,
-              },
-              {
-                icon: "fa-credit-card",
-                label: "Account No.",
-                value: settings.paymentDetails.accountNumber,
-              },
-              {
-                icon: "fa-user",
-                label: "Account Name",
-                value: settings.paymentDetails.accountName,
-              },
-            ].map(({ icon, label, value }) => (
-              <div
-                key={label}
-                className="flex items-center justify-between py-3 gap-3"
-              >
-                <div className="flex items-center gap-2.5">
-                  <div className="w-7 h-7 bg-[var(--background)] border border-[var(--border)] rounded-lg flex items-center justify-center shrink-0">
-                    <i
-                      className={`fas ${icon} text-[var(--primary)] text-[10px]`}
-                    />
-                  </div>
-                  <span className="text-xs text-[var(--text-muted)] font-medium">
-                    {label}
-                  </span>
-                </div>
-                <span className="text-sm font-bold text-[var(--text)] text-right">
-                  {value || "—"}
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mx-5 mb-5 flex items-start gap-2.5 bg-[#e8f0eb] border border-[#c0d4c7] rounded-xl px-4 py-3">
-            <i className="fas fa-circle-info text-[var(--primary)] text-xs mt-0.5 shrink-0" />
-            <p className="text-xs text-[var(--primary)] font-medium leading-relaxed">
-              Transfer the exact amount shown above, then upload a screenshot or
-              photo of your receipt below.
+        {/* ── Payment details ── */}
+        {!isComplete && (
+          <div className="bg-white border border-[var(--border)] rounded-2xl p-5 mb-4 shadow-sm">
+            <p className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-widest mb-2">
+              Bank Details
+            </p>
+            <p className="text-sm text-[var(--text)]">
+              {settings.paymentDetails?.bankName}
+            </p>
+            <p className="text-sm text-[var(--text)] font-mono">
+              {settings.paymentDetails?.accountNumber}
+            </p>
+            <p className="text-sm text-[var(--text)]">
+              {settings.paymentDetails?.accountName}
             </p>
           </div>
-        </div>
+        )}
 
-        {/* ── Success: order ID card ── */}
+        {/* ── Success card ── */}
         {isComplete && (
-          <div className="bg-white border border-[var(--border)] rounded-2xl overflow-hidden mb-4 shadow-sm">
-            {/* Green top bar */}
-            <div className="h-1.5 bg-[var(--primary)] w-full" />
-            <div className="p-5 text-center">
-              <div className="w-16 h-16 bg-[#e8f0eb] rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-circle-check text-[var(--primary)] text-3xl" />
-              </div>
-              <h3 className="text-lg font-extrabold text-[var(--text)] mb-1">
-                Order Confirmed!
-              </h3>
-              <p className="text-sm text-[var(--text-muted)] mb-4 leading-relaxed">
-                Your receipt has been submitted. We'll verify your payment and
-                update your order status shortly.
-              </p>
-
-              {/* Order ID box */}
+          <div className="bg-white border border-[var(--border)] rounded-2xl p-5 mb-4 shadow-sm text-center">
+            <div className="w-14 h-14 bg-[#e8f0eb] rounded-full flex items-center justify-center mx-auto mb-3">
+              <i className="fas fa-check text-[var(--primary)] text-2xl" />
+            </div>
+            <h2 className="text-base font-extrabold text-[var(--text)] mb-3">
+              Order Confirmed!
+            </h2>
+            <div>
               <div className="bg-[var(--background)] border border-[var(--border)] rounded-xl p-4 mb-2">
                 <p className="text-xs text-[var(--text-muted)] font-semibold uppercase tracking-widest mb-1.5">
                   Your Order ID
