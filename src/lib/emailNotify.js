@@ -4,9 +4,9 @@ import emailjs from "@emailjs/browser";
    EmailJS Configuration
    Paste your credentials from https://dashboard.emailjs.com
 ───────────────────────────────────────────────────────── */
-const EMAILJS_PUBLIC_KEY = "PASTE_YOUR_PUBLIC_KEY_HERE";
-const EMAILJS_SERVICE_ID = "PASTE_YOUR_SERVICE_ID_HERE";
-const EMAILJS_TEMPLATE_ID = "PASTE_YOUR_TEMPLATE_ID_HERE";
+const EMAILJS_PUBLIC_KEY = "qboIpC6UEbiAJMG5b";
+const EMAILJS_SERVICE_ID = "service_w6ypubr";
+const EMAILJS_TEMPLATE_ID = "template_kgyoq5s";
 
 /**
  * Sends an email alert to the business owner whenever a new
