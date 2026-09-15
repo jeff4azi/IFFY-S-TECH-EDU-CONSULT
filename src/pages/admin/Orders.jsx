@@ -83,6 +83,7 @@ export default function OrdersManager() {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [orderIdToDelete, setOrderIdToDelete] = useState(null);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [emailAlerts, setEmailAlerts] = useState([]);
 
   /* ── fetch ── */
   const fetchOrders = useCallback(
@@ -160,7 +161,56 @@ export default function OrdersManager() {
         prev.map((o) => (o.id === order.id ? { ...o, status: newStatus } : o)),
       );
     refreshOrderSummary();
+
+    if (newStatus === "completed") {
+      notifyCustomerOfCompletion(order);
+    }
   };
+
+  /* ── completion email side-effect ──
+     Fires once, server-side (see /api/send-completion-email). Never blocks
+     or reverts the status change itself — only surfaces a dismissible
+     warning if the email couldn't go out. */
+  const notifyCustomerOfCompletion = async (order) => {
+    try {
+      const res = await fetch("/api/send-completion-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId: order.id }),
+      });
+      const result = await res.json().catch(() => ({}));
+
+      if (!res.ok || !result.sent) {
+        if (result.reason === "no_email") {
+          pushEmailAlert(
+            order,
+            "was marked completed, but no customer email was found on file — the completion email was not sent.",
+          );
+        } else if (result.reason !== "already_sent") {
+          pushEmailAlert(
+            order,
+            "was marked completed, but the completion email failed to send.",
+          );
+        }
+      }
+    } catch (err) {
+      console.error("Error sending completion email:", err);
+      pushEmailAlert(
+        order,
+        "was marked completed, but the completion email request failed.",
+      );
+    }
+  };
+
+  const pushEmailAlert = (order, message) => {
+    setEmailAlerts((prev) => [
+      ...prev,
+      { id: `${order.id}-${Date.now()}`, orderCode: order.order_id, message },
+    ]);
+  };
+
+  const dismissEmailAlert = (id) =>
+    setEmailAlerts((prev) => prev.filter((a) => a.id !== id));
 
   const handleDeleteOrder = (id) => {
     setOrderIdToDelete(id);
@@ -529,6 +579,31 @@ export default function OrdersManager() {
           Refresh
         </button>
       </div>
+
+      {/* ── Completion email alerts ── */}
+      {emailAlerts.length > 0 && (
+        <div className="space-y-2 mb-5">
+          {emailAlerts.map((alert) => (
+            <div
+              key={alert.id}
+              className="flex items-start gap-3 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl"
+            >
+              <i className="fas fa-triangle-exclamation text-amber-500 text-sm mt-0.5 shrink-0" />
+              <p className="text-xs text-amber-800 font-medium flex-1">
+                Order <span className="font-mono font-bold">{alert.orderCode}</span>{" "}
+                {alert.message}
+              </p>
+              <button
+                onClick={() => dismissEmailAlert(alert.id)}
+                className="text-amber-500 hover:text-amber-700 shrink-0"
+                aria-label="Dismiss"
+              >
+                <i className="fas fa-xmark text-xs" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* ── Status tabs ── */}
       <div className="flex flex-wrap gap-2 mb-5">
