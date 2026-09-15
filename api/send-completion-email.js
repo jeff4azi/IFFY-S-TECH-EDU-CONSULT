@@ -212,7 +212,14 @@ export default async function handler(req, res) {
         "-",
         error?.message || "no matching row",
       );
-      return res.status(404).json({ sent: false, error: "Order not found" });
+      // TEMPORARY: surfacing the real Supabase error in the response so it's
+      // visible directly in the Network tab. Remove the `debug` field once
+      // this is confirmed working.
+      return res.status(404).json({
+        sent: false,
+        error: "Order not found",
+        debug: error?.message || error?.code || "no matching row for that id",
+      });
     }
 
     if (order.status !== "completed") {
@@ -270,6 +277,8 @@ export default async function handler(req, res) {
     return res.status(200).json({ sent: true });
   } catch (err) {
     console.error("send-completion-email error:", err);
-    return res.status(500).json({ sent: false, error: "Internal error" });
+    return res
+      .status(500)
+      .json({ sent: false, error: "Internal error", debug: err?.message });
   }
 }
