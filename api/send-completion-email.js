@@ -206,6 +206,12 @@ export default async function handler(req, res) {
       .single();
 
     if (error || !order) {
+      console.error(
+        "send-completion-email: order lookup failed for id",
+        orderId,
+        "-",
+        error?.message || "no matching row",
+      );
       return res.status(404).json({ sent: false, error: "Order not found" });
     }
 
