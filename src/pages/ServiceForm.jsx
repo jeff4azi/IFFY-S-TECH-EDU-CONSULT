@@ -3,6 +3,7 @@ import { useNavigate, useLocation, useParams } from "react-router-dom";
 import IffysLogo from "../assets/IFFYS-TECH EDU-CONSULT-LOGO.png";
 import { uploadOrderFile } from "../lib/imageUpload";
 import { useAdmin } from "../contexts/AdminContext";
+import AlertModal from "../components/AlertModal";
 
 const PENDING_ORDER_KEY = "itc_pending_order";
 
@@ -37,6 +38,16 @@ export default function ServiceForm() {
   const [uploadErrors, setUploadErrors] = useState({});
   // true = "Yes, I have it" (no fee) | false = "No" (fee applies) | undefined = not answered
   const [conditionalAnswers, setConditionalAnswers] = useState({});
+  // Custom alert (replaces window.alert)
+  const [alertState, setAlertState] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "warning",
+  });
+  const showAlert = (title, message, type = "warning") =>
+    setAlertState({ open: true, title, message, type });
+  const closeAlert = () => setAlertState((p) => ({ ...p, open: false }));
   const [resolvedService, setResolvedService] = useState(
     location.state?.service || null,
   );
@@ -149,14 +160,22 @@ export default function ServiceForm() {
   const handleSubmit = (e) => {
     e.preventDefault();
     if (Object.values(uploading).some(Boolean)) {
-      alert("Please wait for all files to finish uploading.");
+      showAlert(
+        "Upload in progress",
+        "Please wait for all files to finish uploading.",
+        "info",
+      );
       return;
     }
     const unanswered = feeFields.find(
       (f) => conditionalAnswers[f.name] === undefined,
     );
     if (unanswered) {
-      alert(`Please answer: "Do you already have your ${unanswered.name}?"`);
+      showAlert(
+        "Answer required",
+        `Please answer: "Do you already have your ${unanswered.name}?"`,
+        "warning",
+      );
       return;
     }
     const s = resolvedService;
@@ -449,6 +468,13 @@ export default function ServiceForm() {
 
   return (
     <div className="min-h-screen bg-[var(--background)]">
+      <AlertModal
+        isOpen={alertState.open}
+        onClose={closeAlert}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
       {/* ── Dark top header ── */}
       <header className="bg-[var(--primary)]">
         <div className="max-w-3xl mx-auto px-4 py-5 flex items-center justify-between">
