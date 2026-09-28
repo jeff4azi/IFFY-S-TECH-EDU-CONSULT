@@ -104,6 +104,7 @@ export default function PaymentPage() {
         serviceId: pendingOrder.serviceId,
         formData: pendingOrder.formData,
         receiptUrl,
+        totalPrice: pendingOrder.finalPriceValue ?? null,
       });
       if (error) throw new Error(error.message);
       try {
@@ -125,7 +126,7 @@ export default function PaymentPage() {
       sendOrderNotification({
         orderId,
         serviceName: pendingOrder.service?.name,
-        price: pendingOrder.service?.price,
+        price: pendingOrder.finalPriceDisplay || pendingOrder.service?.price,
         formData: pendingOrder.formData,
         receiptUrl,
       });
@@ -241,7 +242,7 @@ export default function PaymentPage() {
           </p>
           <p className="text-lg font-bold text-[var(--text)]">{service.name}</p>
           <p className="text-sm text-[var(--secondary)] font-bold mt-1">
-            {service.price}
+            {pendingOrder.finalPriceDisplay || service.price}
           </p>
         </div>
 

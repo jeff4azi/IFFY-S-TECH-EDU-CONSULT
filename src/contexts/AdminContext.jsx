@@ -463,6 +463,7 @@ export function AdminProvider({ children }) {
         service_id: order.serviceId,
         user_data: order.formData,
         receipt_url: order.receiptUrl || null,
+        total_price: order.totalPrice ?? null,
         status: "pending_verification",
       })
       .select()

@@ -20,7 +20,13 @@ const EMPTY_FORM = {
   image: "",
   fields: [],
 };
-const EMPTY_FIELD = { name: "", type: "text", required: false };
+const EMPTY_FIELD = {
+  name: "",
+  type: "text",
+  required: false,
+  hasFee: false,
+  extraPrice: "",
+};
 
 const inputCls =
   "w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--background)] " +
@@ -630,6 +636,7 @@ export default function ServicesManager() {
                             className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all cursor-pointer
                             ${field.required ? "bg-[var(--primary)] border-[var(--primary)]" : "border-[var(--border)] bg-white"}`}
                             onClick={() =>
+                              !field.hasFee &&
                               updateField(i, "required", !field.required)
                             }
                           >
@@ -648,6 +655,53 @@ export default function ServicesManager() {
                         >
                           <i className="fas fa-xmark text-xs" />
                         </button>
+
+                        {/* Dynamic pricing: fee if customer doesn't have this */}
+                        <div className="basis-full flex items-center gap-2 flex-wrap pl-9">
+                          <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                            <div
+                              className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all cursor-pointer
+                              ${field.hasFee ? "bg-[var(--primary)] border-[var(--primary)]" : "border-[var(--border)] bg-white"}`}
+                              onClick={() => {
+                                const next = !field.hasFee;
+                                updateField(i, "hasFee", next);
+                                // a field with a fee can't be required: the customer
+                                // must be able to skip it and pay the fee instead
+                                if (next) updateField(i, "required", false);
+                              }}
+                            >
+                              {field.hasFee && (
+                                <i className="fas fa-check text-white text-[8px]" />
+                              )}
+                            </div>
+                            <span className="text-[11px] text-[var(--text-muted)] font-semibold">
+                              Charge a fee if customer doesn't have this
+                            </span>
+                          </label>
+                          {field.hasFee && (
+                            <span className="flex items-center gap-1.5">
+                              <span className="text-[11px] text-[var(--text-muted)] font-semibold">
+                                Fee (₦):
+                              </span>
+                              <input
+                                type="number"
+                                min="0"
+                                placeholder="e.g. 5000"
+                                value={field.extraPrice ?? ""}
+                                onChange={(e) =>
+                                  updateField(
+                                    i,
+                                    "extraPrice",
+                                    e.target.value === ""
+                                      ? ""
+                                      : Number(e.target.value),
+                                  )
+                                }
+                                className="w-28 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-white text-[var(--text)] text-xs focus:outline-none focus:border-[var(--primary)] transition-all"
+                              />
+                            </span>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -686,6 +740,7 @@ export default function ServicesManager() {
                       className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all cursor-pointer
                       ${newField.required ? "bg-[var(--primary)] border-[var(--primary)]" : "border-[var(--border)] bg-white"}`}
                       onClick={() =>
+                        !newField.hasFee &&
                         setNewField((p) => ({ ...p, required: !p.required }))
                       }
                     >
@@ -697,6 +752,51 @@ export default function ServicesManager() {
                       Required
                     </span>
                   </label>
+                  <div className="basis-full flex items-center gap-2 flex-wrap">
+                    <label className="flex items-center gap-1.5 cursor-pointer shrink-0">
+                      <div
+                        className={`w-4 h-4 rounded border-2 flex items-center justify-center transition-all cursor-pointer
+                        ${newField.hasFee ? "bg-[var(--primary)] border-[var(--primary)]" : "border-[var(--border)] bg-white"}`}
+                        onClick={() =>
+                          setNewField((p) => ({
+                            ...p,
+                            hasFee: !p.hasFee,
+                            required: !p.hasFee ? false : p.required,
+                          }))
+                        }
+                      >
+                        {newField.hasFee && (
+                          <i className="fas fa-check text-white text-[8px]" />
+                        )}
+                      </div>
+                      <span className="text-[11px] text-[var(--text-muted)] font-semibold">
+                        Charge a fee if customer doesn't have this
+                      </span>
+                    </label>
+                    {newField.hasFee && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="text-[11px] text-[var(--text-muted)] font-semibold">
+                          Fee (₦):
+                        </span>
+                        <input
+                          type="number"
+                          min="0"
+                          placeholder="e.g. 5000"
+                          value={newField.extraPrice}
+                          onChange={(e) =>
+                            setNewField((p) => ({
+                              ...p,
+                              extraPrice:
+                                e.target.value === ""
+                                  ? ""
+                                  : Number(e.target.value),
+                            }))
+                          }
+                          className="w-28 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-white text-[var(--text)] text-xs focus:outline-none focus:border-[var(--primary)] transition-all"
+                        />
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={handleAddField}

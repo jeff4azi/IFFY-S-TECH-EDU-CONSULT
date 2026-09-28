@@ -6,6 +6,15 @@ import { useAdmin } from "../contexts/AdminContext";
 
 const PENDING_ORDER_KEY = "itc_pending_order";
 
+/* ── Dynamic pricing helpers ── */
+function parsePrice(priceStr) {
+  const num = parseFloat(String(priceStr || "").replace(/[^0-9.]/g, ""));
+  return isNaN(num) ? 0 : num;
+}
+function formatNaira(value) {
+  return `₦${Number(value).toLocaleString()}`;
+}
+
 /* ── Field type icon map ── */
 const FIELD_ICONS = {
   text: "fa-pen-line",
@@ -26,6 +35,8 @@ export default function ServiceForm() {
   const [filePreviews, setFilePreviews] = useState({});
   const [uploading, setUploading] = useState({});
   const [uploadErrors, setUploadErrors] = useState({});
+  // true = "Yes, I have it" (no fee) | false = "No" (fee applies) | undefined = not answered
+  const [conditionalAnswers, setConditionalAnswers] = useState({});
   const [resolvedService, setResolvedService] = useState(
     location.state?.service || null,
   );
@@ -112,6 +123,28 @@ export default function ServiceForm() {
     }
   };
 
+  /* ── Dynamic pricing ── */
+  const feeFields = (resolvedService?.fields || []).filter((f) => f.hasFee);
+  const extraFees = feeFields.reduce(
+    (sum, f) =>
+      conditionalAnswers[f.name] === false
+        ? sum + (Number(f.extraPrice) || 0)
+        : sum,
+    0,
+  );
+  const baseValue = resolvedService ? parsePrice(resolvedService.price) : 0;
+  const hasNumericBase = baseValue > 0;
+  const totalValue = baseValue + extraFees;
+  // What the customer sees / what gets saved. Untouched (original price string)
+  // when no fee applies, so existing services behave exactly as before.
+  const finalPriceDisplay =
+    extraFees === 0
+      ? resolvedService?.price
+      : hasNumericBase
+        ? formatNaira(totalValue)
+        : `${resolvedService?.price} + ${formatNaira(extraFees)}`;
+  const finalPriceValue = hasNumericBase ? totalValue : null;
+
   /* ── Submit ── */
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -119,11 +152,20 @@ export default function ServiceForm() {
       alert("Please wait for all files to finish uploading.");
       return;
     }
+    const unanswered = feeFields.find(
+      (f) => conditionalAnswers[f.name] === undefined,
+    );
+    if (unanswered) {
+      alert(`Please answer: "Do you already have your ${unanswered.name}?"`);
+      return;
+    }
     const s = resolvedService;
     const pendingOrder = {
       serviceId: s.id,
       service: { id: s.id, name: s.name, price: s.price, fields: s.fields },
       formData: form,
+      finalPriceValue,
+      finalPriceDisplay,
       savedAt: Date.now(),
     };
     try {
@@ -158,7 +200,12 @@ export default function ServiceForm() {
   const service = resolvedService;
   const anyUploading = Object.values(uploading).some(Boolean);
   const totalFields = service.fields?.length || 0;
-  const filledFields = service.fields?.filter((f) => form[f.name]).length || 0;
+  const filledFields =
+    service.fields?.filter((f) =>
+      f.hasFee
+        ? conditionalAnswers[f.name] === false || !!form[f.name]
+        : form[f.name],
+    ).length || 0;
   const progress =
     totalFields > 0 ? Math.round((filledFields / totalFields) * 100) : 0;
 
@@ -169,7 +216,7 @@ export default function ServiceForm() {
     "focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[rgba(26,67,40,0.12)] " +
     "transition-all duration-200";
 
-  const renderField = (field, index) => {
+  const renderFieldControl = (field, index) => {
     const value = form[field.name] || "";
     const isUploading = uploading[field.name];
     const uploadError = uploadErrors[field.name];
@@ -339,6 +386,67 @@ export default function ServiceForm() {
     );
   };
 
+  // Any field type can carry a fee via field.hasFee. The customer is asked first;
+  // the real input only appears on "Yes" (and is then required). "No" adds the fee.
+  const renderField = (field, index) => {
+    if (!field.hasFee) return renderFieldControl(field, index);
+
+    const hasIt = conditionalAnswers[field.name] === true;
+    const saidNo = conditionalAnswers[field.name] === false;
+
+    return (
+      <div
+        key={index}
+        className="space-y-3 border border-[var(--border)] rounded-xl p-4 bg-[var(--background)]"
+      >
+        <label className="block text-sm font-semibold text-[var(--text)]">
+          Do you already have your {field.name}?
+          {Number(field.extraPrice) > 0 && (
+            <span className="text-xs text-[var(--text-muted)] font-medium ml-1">
+              (+{formatNaira(Number(field.extraPrice))} if not)
+            </span>
+          )}
+        </label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              setConditionalAnswers((p) => ({ ...p, [field.name]: true }))
+            }
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+              hasIt
+                ? "bg-[var(--primary)] text-white border-[var(--primary)]"
+                : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--primary)]"
+            }`}
+          >
+            Yes, I have it
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setConditionalAnswers((p) => ({ ...p, [field.name]: false }));
+              setForm((p) => {
+                const next = { ...p };
+                delete next[field.name];
+                return next;
+              });
+              setFilePreviews((p) => ({ ...p, [field.name]: null }));
+              setUploadErrors((p) => ({ ...p, [field.name]: null }));
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${
+              saidNo
+                ? "bg-[var(--text)] text-white border-[var(--text)]"
+                : "bg-white text-[var(--text-muted)] border-[var(--border)] hover:border-[var(--text-muted)]"
+            }`}
+          >
+            No, I don't have it
+          </button>
+        </div>
+        {hasIt && renderFieldControl({ ...field, required: true }, index)}
+      </div>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* ── Dark top header ── */}
@@ -396,8 +504,14 @@ export default function ServiceForm() {
               <div className="shrink-0 text-right">
                 <p className="text-xs text-white/50 font-medium">Price</p>
                 <p className="text-2xl font-extrabold text-[var(--secondary)] leading-tight">
-                  {service.price}
+                  {finalPriceDisplay}
                 </p>
+                {extraFees > 0 && (
+                  <p className="text-[10px] text-white/50 mt-1 max-w-[160px] ml-auto">
+                    Includes {formatNaira(extraFees)} for details you don't
+                    have
+                  </p>
+                )}
               </div>
             </div>
 
