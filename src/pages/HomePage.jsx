@@ -149,12 +149,6 @@ export default function HomePage() {
     }
   }, [shareToast]);
 
-  /* initialise activeCategory once services load */
-  useEffect(() => {
-    const cats = Object.keys(services);
-    if (cats.length && !activeCategory) setActiveCategory(cats[0]);
-  }, [services]);
-
   const scrollTo = (id) => {
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
   };
@@ -1140,6 +1134,29 @@ export default function HomePage() {
                 marginBottom: "2.5rem",
               }}
             >
+              <button
+                onClick={() => setActiveCategory(null)}
+                style={{
+                  background:
+                    activeCategory === null
+                      ? "var(--secondary)"
+                      : "rgba(255,255,255,0.08)",
+                  color:
+                    activeCategory === null ? "#fff" : "rgba(255,255,255,0.7)",
+                  border:
+                    activeCategory === null
+                      ? "none"
+                      : "1px solid rgba(255,255,255,0.15)",
+                  borderRadius: 50,
+                  padding: "8px 20px",
+                  fontWeight: 600,
+                  fontSize: "0.88rem",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                }}
+              >
+                All
+              </button>
               {Object.keys(services).map((cat) => (
                 <button
                   key={cat}
@@ -1173,21 +1190,22 @@ export default function HomePage() {
           {Object.entries(services).map(
             ([category, items]) =>
               (activeCategory === null || activeCategory === category) && (
-                <div key={category}>
-                  {Object.keys(services).length === 1 && (
-                    <h3
-                      style={{
-                        color: "rgba(255,255,255,0.85)",
-                        fontWeight: 700,
-                        fontSize: "1.2rem",
-                        marginBottom: "1.5rem",
-                        paddingLeft: "0.75rem",
-                        borderLeft: "3px solid var(--secondary)",
-                      }}
-                    >
-                      {category}
-                    </h3>
-                  )}
+                <div key={category} style={{ marginBottom: "2rem" }}>
+                  {Object.keys(services).length > 1 &&
+                    activeCategory === null && (
+                      <h3
+                        style={{
+                          color: "rgba(255,255,255,0.85)",
+                          fontWeight: 700,
+                          fontSize: "1.2rem",
+                          marginBottom: "1.5rem",
+                          paddingLeft: "0.75rem",
+                          borderLeft: "3px solid var(--secondary)",
+                        }}
+                      >
+                        {category}
+                      </h3>
+                    )}
                   <div
                     style={{
                       display: "grid",
